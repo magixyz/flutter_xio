@@ -1,0 +1,5 @@
+
+
+enum RegisterType{
+  input,holding
+}

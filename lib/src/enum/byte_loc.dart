@@ -1,0 +1,3 @@
+enum ByteLoc{
+  low,high
+}
