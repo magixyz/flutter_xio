@@ -1,4 +1,4 @@
-library longshort_register_io;
+library flutter_xio;
 
 export 'src/enum/byte_loc.dart';
 export 'src/enum/register_type.dart';
