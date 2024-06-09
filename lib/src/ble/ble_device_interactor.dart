@@ -21,7 +21,7 @@ class BleDeviceInteractor {
         _readCharacteristic = readCharacteristic,
         _writeWithResponse = writeWithResponse,
         _writeWithoutResponse = writeWithOutResponse,
-        _subScribeToCharacteristic = subscribeToCharacteristic,
+        _subscribeToCharacteristic = subscribeToCharacteristic,
         _logMessage = logMessage;
 
   final Future<List<DiscoveredService>> Function(String deviceId)
@@ -37,11 +37,11 @@ class BleDeviceInteractor {
       {required List<int> value}) _writeWithoutResponse;
 
   final Stream<List<int>> Function(QualifiedCharacteristic characteristic)
-      _subScribeToCharacteristic;
+      _subscribeToCharacteristic;
 
   final void Function(String message) _logMessage;
 
-  Future<List<DiscoveredService>> discoverServices(String deviceId) async {
+  Future<List<DiscoveredService>?> discoverServices(String deviceId) async {
     try {
       _logMessage('Start discovering services for: $deviceId');
       final result = await _bleDiscoverServices(deviceId);
@@ -49,13 +49,16 @@ class BleDeviceInteractor {
       return result;
     } on Exception catch (e) {
       _logMessage('Error occured when discovering services: $e');
-      rethrow;
+      return null;
     }
   }
 
-  Future<List<int>> readCharacteristic(
+  Future<List<int>?> readCharacteristic(
       QualifiedCharacteristic characteristic) async {
     try {
+
+      print('will read characteristic: ${characteristic}' );
+
       final result = await _readCharacteristic(characteristic);
 
       _logMessage('Read ${characteristic.characteristicId}: value = $result');
@@ -66,7 +69,8 @@ class BleDeviceInteractor {
       );
       // ignore: avoid_print
       print(s);
-      rethrow;
+      // rethrow;
+      return null;
     }
   }
 
@@ -102,9 +106,9 @@ class BleDeviceInteractor {
     }
   }
 
-  Stream<List<int>> subScribeToCharacteristic(
+  Stream<List<int>> subscribeToCharacteristic(
       QualifiedCharacteristic characteristic) {
     _logMessage('Subscribing to: ${characteristic.characteristicId} ');
-    return _subScribeToCharacteristic(characteristic);
+    return _subscribeToCharacteristic(characteristic);
   }
 }

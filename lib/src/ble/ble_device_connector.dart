@@ -3,25 +3,65 @@ import 'dart:async';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'reactive_state.dart';
 
-class BleDeviceConnector extends ReactiveState<ConnectionStateUpdate> {
-  BleDeviceConnector({
-    required FlutterReactiveBle ble,
-    required Function(String message) logMessage,
-  })  : _ble = ble,
-        _logMessage = logMessage;
+class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
+
 
   final FlutterReactiveBle _ble;
   final void Function(String message) _logMessage;
 
+
   @override
-  Stream<ConnectionStateUpdate> get state => _deviceConnectionController.stream;
+  Stream<DeviceConnectionState> get state => _deviceConnectionController.stream;
+  final _deviceConnectionController = StreamController<DeviceConnectionState>();
 
-  final _deviceConnectionController = StreamController<ConnectionStateUpdate>();
 
+  String? deviceId;
+  DeviceConnectionState? deviceConnectionState;
   // ignore: cancel_subscriptions
-  late StreamSubscription<ConnectionStateUpdate> _connection;
+  StreamSubscription<ConnectionStateUpdate>? _connection;
 
-  Future<void> connect(String deviceId) async {
+  Completer<DeviceConnectionState>? _completer ;
+
+  BleDeviceConnector({
+    required FlutterReactiveBle ble,
+    required Function(String message) logMessage,
+  })  : _ble = ble,
+        _logMessage = logMessage{
+
+    _ble.connectedDeviceStream.listen((event) {
+
+      print('mark: ble state 1: ${event.connectionState}');
+
+      if (event.deviceId == this.deviceId){
+        deviceConnectionState = event.connectionState;
+        _deviceConnectionController.add(event.connectionState);
+
+
+        print('mark: ble state : ${event.connectionState}');
+        if(_completer!= null && !_completer!.isCompleted){
+
+
+          print('mark: ble completer : ${event.connectionState}');
+          _completer!.complete(event.connectionState);
+        }
+      }
+
+      print('mark: connect state 1: $deviceConnectionState');
+    });
+
+  }
+
+  Future<bool> connect(String deviceId) async {
+
+
+    print('mark: ble connect start');
+
+    if (deviceId != this.deviceId) await reset();
+
+    if ( this.deviceId != null
+      && this.deviceConnectionState != null
+      && this._connection != null
+      && [DeviceConnectionState.connected,DeviceConnectionState.connecting].contains(this.deviceConnectionState!) ) return false;
 
     // await _ble.requestConnectionPriority(deviceId: deviceId, priority:  ConnectionPriority.highPerformance);
     // final mtu = await _ble.requestMtu(deviceId: deviceId, mtu: 250);
@@ -29,33 +69,83 @@ class BleDeviceConnector extends ReactiveState<ConnectionStateUpdate> {
     // LogUtil.logger.d('mtu: $mtu');
 
     _logMessage('Start connecting to $deviceId');
+    this.deviceId = deviceId;
     _connection = _ble.connectToDevice(id: deviceId, connectionTimeout: const Duration(seconds: 3)).listen(
       (update) {
         _logMessage(
             'ConnectionState for device $deviceId : ${update.connectionState}');
-        _deviceConnectionController.add(update);
+
       },
       onError: (Object e) =>
           _logMessage('Connecting to device $deviceId resulted in error $e'),
     );
+
+    print('mark: connect 2');
+
+    await _ble.requestMtu(deviceId: deviceId, mtu: 256);
+
+    print('mark: connect 3');
+    while(! [DeviceConnectionState.connected,DeviceConnectionState.disconnected].contains( deviceConnectionState ) ){
+
+      print('mark: connect 4');
+      _completer = Completer<DeviceConnectionState>();
+      await _completer!.future;
+
+    }
+
+
+    print('mark: ble connect end: $deviceConnectionState');
+
+    return deviceConnectionState == DeviceConnectionState.connected;
+
   }
 
-  Future<void> disconnect(String deviceId) async {
+  Future<bool> disconnect() async {
+
+    if (deviceConnectionState != null && deviceConnectionState != DeviceConnectionState.connected ) return false;
+
+    print('mark: disconnect 1');
+
     try {
       _logMessage('disconnecting to device: $deviceId');
-      await _connection.cancel();
+      await _connection?.cancel();
+      _connection = null;
     } on Exception catch (e, _) {
       _logMessage("Error disconnecting from a device: $e");
     } finally {
       // Since [_connection] subscription is terminated, the "disconnected" state cannot be received and propagated
-      _deviceConnectionController.add(
-        ConnectionStateUpdate(
-          deviceId: deviceId,
-          connectionState: DeviceConnectionState.disconnected,
-          failure: null,
-        ),
-      );
+      // _deviceConnectionController.add(
+      //   ConnectionStateUpdate(
+      //     deviceId: deviceId,
+      //     connectionState: DeviceConnectionState.disconnected,
+      //     failure: null,
+      //   ),
+      // );
+
     }
+
+
+    while(! [DeviceConnectionState.connected,DeviceConnectionState.disconnected].contains( deviceConnectionState ) ){
+      _completer = Completer<DeviceConnectionState>();
+      await _completer!.future;
+    };
+
+    return deviceConnectionState == DeviceConnectionState.disconnected;
+
+  }
+
+  reset() async{
+
+    try {
+      await _connection?.cancel();
+    }catch(e){
+      print('error when disconnect old connect: $e');
+    }
+
+    deviceId = null;
+    deviceConnectionState = null;
+    _connection = null;
+
   }
 
   Future<void> dispose() async {

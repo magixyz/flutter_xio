@@ -309,7 +309,9 @@ class ModbusPtl{
     return todata;
   }
   static Uint16List byte2register(Uint8List byte){
-    assert(byte.length % 2 == 0);
+    // if (byte.length % 2 != 0) return Uint16List(0);
+
+    // assert(byte.length % 2 == 0);
     int len = byte.length ~/ 2;
 
     Uint16List todata = Uint16List( len);

@@ -7,7 +7,7 @@ class Syncer<T>{
   Timer? timer;
   bool _breaked = false;
 
-  Future<T?> sendRetryFor(Function func, {int retry=5,int timeout=500}) async{
+  Future<T?> sendRetryFor(Function func, {int retry=3,int timeout=1000}) async{
 
     _breaked = false;
 
@@ -19,7 +19,7 @@ class Syncer<T>{
 
       if (_breaked) return null;
 
-      var ret = await sendWaitFor(func, millisecond:timeout);
+      var ret = await sendWaitFor(func, timeout:timeout);
 
       print('${DateTime.now()}, ret:$ret');
 
@@ -32,7 +32,7 @@ class Syncer<T>{
     return null;
   }
 
-  Future<T?> sendWaitFor(Function func, {int millisecond=500}) async{
+  Future<T?> sendWaitFor(Function func, {int timeout=1000}) async{
 
     completer = Completer<T?>();
 
@@ -47,7 +47,7 @@ class Syncer<T>{
 
       return null;
     }
-    timer = Timer(Duration(milliseconds: millisecond),()  {
+    timer = Timer(Duration(milliseconds: timeout),()  {
 
       print('${DateTime.now()}, Timer actived..');
       if (!tmpCompleter.isCompleted){
