@@ -134,6 +134,15 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
 
   }
 
+  Future<int?> rssi() async{
+
+    if (deviceConnectionState != DeviceConnectionState.connected) return null;
+
+    if (deviceId != null) {
+      return await _ble.readRssi(deviceId!);
+    }
+  }
+
   reset() async{
 
     try {

@@ -4,7 +4,7 @@ import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 
 class BleDeviceInteractor {
   BleDeviceInteractor({
-    required Future<List<DiscoveredService>> Function(String deviceId)
+    required Future<List<Service>> Function(String deviceId)
         bleDiscoverServices,
     required Future<List<int>> Function(QualifiedCharacteristic characteristic)
         readCharacteristic,
@@ -24,7 +24,7 @@ class BleDeviceInteractor {
         _subscribeToCharacteristic = subscribeToCharacteristic,
         _logMessage = logMessage;
 
-  final Future<List<DiscoveredService>> Function(String deviceId)
+  final Future<List<Service>> Function(String deviceId)
       _bleDiscoverServices;
 
   final Future<List<int>> Function(QualifiedCharacteristic characteristic)
@@ -41,7 +41,7 @@ class BleDeviceInteractor {
 
   final void Function(String message) _logMessage;
 
-  Future<List<DiscoveredService>?> discoverServices(String deviceId) async {
+  Future<List<Service>?> discoverServices(String deviceId) async {
     try {
       _logMessage('Start discovering services for: $deviceId');
       final result = await _bleDiscoverServices(deviceId);
