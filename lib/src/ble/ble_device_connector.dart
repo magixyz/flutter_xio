@@ -68,6 +68,7 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
     //
     // LogUtil.logger.d('mtu: $mtu');
 
+
     _logMessage('Start connecting to $deviceId');
     this.deviceId = deviceId;
     _connection = _ble.connectToDevice(id: deviceId, connectionTimeout: const Duration(seconds: 3)).listen(
@@ -132,6 +133,20 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
 
     return deviceConnectionState == DeviceConnectionState.disconnected;
 
+  }
+
+  Future<List<Service>?> discoverServices(String deviceId) async {
+    try {
+      _logMessage('Start discovering services for: $deviceId');
+      await _ble.discoverAllServices(deviceId);
+      final result =  _ble.getDiscoveredServices(deviceId);
+
+      _logMessage('Discovering services finished');
+      return result;
+    } on Exception catch (e) {
+      _logMessage('Error occured when discovering services: $e');
+      return null;
+    }
   }
 
   Future<int?> rssi() async{

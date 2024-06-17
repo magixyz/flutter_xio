@@ -29,7 +29,7 @@ class ModbusBleIo{
   }
 
   Future<Uint16List?> read(int slave, RegisterType rtype, int addr, int size,
-    QualifiedCharacteristic writer,Function listen,
+    Characteristic writer,Function listen,
       {int retry = 3, int timeout = 1000}) async {
     Uint8List data;
     switch (rtype) {
@@ -55,7 +55,7 @@ class ModbusBleIo{
 
 
   Future<int?>  write(int slave, Uint16List argData, int addr,
-      QualifiedCharacteristic writer,Function listen,
+      Characteristic writer,Function listen,
       {int retry = 3, int timeout = 1000}) async {
     Uint8List data = ModbusPtl.writeRegister(slave, addr, argData);
 
@@ -71,7 +71,7 @@ class ModbusBleIo{
 
 
 
-  Future<List<int>?> call(List<int> data,QualifiedCharacteristic writer,Function listen, {int retry = 3, int timeout = 1000}) async {
+  Future<List<int>?> call(List<int> data,Characteristic writer,Function listen, {int retry = 3, int timeout = 1000}) async {
 
 
     if ( deviceConnectionState != DeviceConnectionState.connected) return null;
@@ -121,7 +121,8 @@ class ModbusBleIo{
 
         recv.clear();
 
-        await ble.writeCharacteristicWithoutResponse(writer, value: data);
+        await writer.write(data,withResponse: false);
+        // await ble.writeCharacteristicWithoutResponse(writer, value: data);
 
         print('${DateTime.now()}, sent: $data');
       }, timeout: timeout, retry: retry);
