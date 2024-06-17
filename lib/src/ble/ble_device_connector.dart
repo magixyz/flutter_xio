@@ -53,23 +53,18 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
 
   Future<bool> connect(String deviceId) async {
 
-
     print('mark: ble connect start');
 
-    if (deviceId != this.deviceId) await reset();
+    if (this.deviceId != null){
+      if ( deviceId != this.deviceId  ) {
+        await reset();
+      } else{
+        if (this.deviceConnectionState != null && this.deviceConnectionState != DeviceConnectionState.disconnected){
+          return false;
+        }
+      }
+    }
 
-    if ( this.deviceId != null
-      && this.deviceConnectionState != null
-      && this._connection != null
-      && [DeviceConnectionState.connected,DeviceConnectionState.connecting].contains(this.deviceConnectionState!) ) return false;
-
-    // await _ble.requestConnectionPriority(deviceId: deviceId, priority:  ConnectionPriority.highPerformance);
-    // final mtu = await _ble.requestMtu(deviceId: deviceId, mtu: 250);
-    //
-    // LogUtil.logger.d('mtu: $mtu');
-
-
-    _logMessage('Start connecting to $deviceId');
     this.deviceId = deviceId;
     _connection = _ble.connectToDevice(id: deviceId, connectionTimeout: const Duration(seconds: 3)).listen(
       (update) {
