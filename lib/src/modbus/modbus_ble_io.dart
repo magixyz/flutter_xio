@@ -7,9 +7,9 @@ import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:flutter_xio/src/utils/steam_relay.dart';
 import 'package:tuple/tuple.dart';
 
-import 'utils/syncer.dart';
+import '../utils/syncer.dart';
 import 'modbus_ptl.dart';
-import 'enum/register_type.dart';
+import '../enum/register_type.dart';
 
 class ModbusBleIo{
 

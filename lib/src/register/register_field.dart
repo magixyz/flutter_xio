@@ -3,18 +3,15 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:json_annotation/json_annotation.dart';
+import '../enum/byte_loc.dart';
 
-import '../flutter_xio.dart';
-import 'enum/byte_loc.dart';
+enum FieldType{
+  float,short,ushort,int,uint,ulong,byte,bit,bits,string,hex
+}
 
+abstract class RegisterField {
 
-part 'register_field_meta_v2.g.dart';
-
-@JsonSerializable(fieldRename: FieldRename.snake)
-class RegisterFieldMetaV2 {
-
-  static RegisterFieldMetaV2 instance(String key, Map<String,dynamic> json){
+  static RegisterField instance(String key, Map<String,dynamic> json){
 
     FieldType type = FieldType.values.byName(json['type']);
 
@@ -70,13 +67,7 @@ class RegisterFieldMetaV2 {
   dynamic readValue;
   dynamic writeValue;
 
-  RegisterFieldMetaV2(this.key, this.type, this.name, this.offset,this.size,{this.tag, this.selection});
-
-  factory RegisterFieldMetaV2.fromJson(Map<String, dynamic> json) => _$RegisterFieldMetaV2FromJson(json);
-
-  Map<String, dynamic> toJson() => _$RegisterFieldMetaV2ToJson(this);
-
-
+  RegisterField(this.key, this.type, this.name, this.offset,this.size,{this.tag, this.selection});
 
   read(Uint16List data){
     if (size != data.length) throw Exception('Data length[${data.length}] not match with size[$size]');
@@ -85,7 +76,7 @@ class RegisterFieldMetaV2 {
 
     _read(tmp);
   }
-  _read(ByteData tmp){}
+  _read(ByteData tmp);
 
   write(Uint16List data){
     if (size != data.length) throw Exception('Data length should match with size');
@@ -97,7 +88,7 @@ class RegisterFieldMetaV2 {
     _ByteData2Uint16List(data,tmp);
   }
 
-  _write(ByteData tmp){}
+  _write(ByteData tmp);
 
   _Uint16List2ByteData(Uint16List data){
 
@@ -114,7 +105,7 @@ class RegisterFieldMetaV2 {
   }
 }
 
-class FloatField extends RegisterFieldMetaV2{
+class FloatField extends RegisterField{
 
   FloatField(String key, FieldType type, String? name, int addr,int size,
       {String? tag, List? selection})
@@ -134,7 +125,7 @@ class FloatField extends RegisterFieldMetaV2{
 }
 
 
-class ShortField extends RegisterFieldMetaV2{
+class ShortField extends RegisterField{
   ShortField(String key, FieldType type, String? name, int addr,int size,
       {String? tag, List? selection})
       :super(key,type,name,addr,size){
@@ -153,7 +144,7 @@ class ShortField extends RegisterFieldMetaV2{
 }
 
 
-class UshortField extends RegisterFieldMetaV2{
+class UshortField extends RegisterField{
   UshortField(String key, FieldType type, String? name, int addr,int size,
       {String? tag, List? selection})
       :super(key,type,name,addr,size){
@@ -172,7 +163,7 @@ class UshortField extends RegisterFieldMetaV2{
 }
 
 
-class IntField extends RegisterFieldMetaV2{
+class IntField extends RegisterField{
   IntField(String key, FieldType type, String? name, int addr,int size,
       {String? tag, List? selection})
       :super(key,type,name,addr,size){
@@ -190,7 +181,7 @@ class IntField extends RegisterFieldMetaV2{
   }
 }
 
-class UintField extends RegisterFieldMetaV2{
+class UintField extends RegisterField{
   UintField(String key, FieldType type, String? name, int addr,int size,
       {String? tag, List? selection})
       :super(key,type,name,addr,size){
@@ -209,7 +200,7 @@ class UintField extends RegisterFieldMetaV2{
 }
 
 
-class UlongField extends RegisterFieldMetaV2{
+class UlongField extends RegisterField{
   UlongField(String key, FieldType type, String? name, int addr,int size,
       {String? tag, List? selection})
       :super(key,type,name,addr,size){
@@ -229,7 +220,7 @@ class UlongField extends RegisterFieldMetaV2{
   }
 }
 
-class ByteField extends RegisterFieldMetaV2{
+class ByteField extends RegisterField{
 
   ByteLoc bytePos;
 
@@ -265,7 +256,7 @@ class ByteField extends RegisterFieldMetaV2{
   }
 }
 
-class BitField extends RegisterFieldMetaV2{
+class BitField extends RegisterField{
 
   int bitPos;
   late int mask;
@@ -296,7 +287,7 @@ class BitField extends RegisterFieldMetaV2{
   }
 }
 
-class BitsField extends RegisterFieldMetaV2{
+class BitsField extends RegisterField{
 
   List<int> bitsRange;
 
@@ -325,7 +316,7 @@ class BitsField extends RegisterFieldMetaV2{
 
 }
 
-class StringField extends RegisterFieldMetaV2{
+class StringField extends RegisterField{
   StringField(String key, FieldType type, String? name, int addr,int size,
       {String? tag, List? selection})
       :super(key,type,name,addr,size);
@@ -344,7 +335,7 @@ class StringField extends RegisterFieldMetaV2{
   }
 }
 
-class HexField extends RegisterFieldMetaV2{
+class HexField extends RegisterField{
   HexField(String key, FieldType type, String? name, int addr,int size,
       {String? tag, List? selection})
       :super(key,type,name,addr,size);

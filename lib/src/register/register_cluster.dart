@@ -1,7 +1,7 @@
 
 import 'dart:typed_data';
 
-import 'enum/register_type.dart';
+import '../enum/register_type.dart';
 import 'register_field.dart';
 
 

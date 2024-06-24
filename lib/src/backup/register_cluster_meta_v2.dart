@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:json_annotation/json_annotation.dart';
 
-import 'enum/register_type.dart';
+import '../enum/register_type.dart';
 import 'register_field_meta_v2.dart';
 
 

@@ -1,11 +1,11 @@
 
 import 'dart:typed_data';
 
-import 'package:flutter_xio/src/register_cluster_meta_v2.dart';
+import 'register_cluster_meta_v2.dart';
 import 'package:json_annotation/json_annotation.dart';
 
-import 'enum/register_type.dart';
-import 'register_field.dart';
+import '../enum/register_type.dart';
+import '../register/register_field.dart';
 
 
 
