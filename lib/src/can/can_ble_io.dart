@@ -1,138 +1,44 @@
 
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
-import 'package:flutter_xio/src/utils/steam_relay.dart';
-import 'package:tuple/tuple.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_xio/src/can/blecan_ptl.dart';
+import 'package:flutter_xio/src/can/sdo/sdo_def.dart';
+import 'package:flutter_xio/src/can/sdo/sdo_ptl.dart';
 
-import '../utils/syncer.dart';
-import 'can_ptl.dart';
-import '../enum/register_type.dart';
+import '../ble/ble_io.dart';
+import 'blecan_def.dart';
+import 'sdo/sdo_io.dart';
 
-class ModbusBleIo{
+class CanBleIo{
 
-  FlutterReactiveBle ble;
-  DeviceConnectionState? deviceConnectionState;
+  late SdoPtl sdoPtl;
 
-
-  ModbusBleIo(this.ble){
-
-    ble.connectedDeviceStream.listen((event) {
-      deviceConnectionState = event.connectionState;
-
-      print('mark: connect state: $deviceConnectionState');
-    });
-
-
-  }
-
-  Future<Uint16List?> read(int slave, RegisterType rtype, int addr, int size,
-    Characteristic writer,Function listen,
-      {int retry = 3, int timeout = 1000}) async {
-    Uint8List data;
-    switch (rtype) {
-      case RegisterType.holding:
-        data = CanPtl.readHoldingRegister(slave, addr, size);
-        break;
-      case RegisterType.input:
-        data = CanPtl.readInputRegister(slave, addr, size);
-        break;
-      default:
-        throw UnsupportedError('Unsupported register type: $rtype');
-    }
-
-    List<int>? ret = await call(data, writer, listen);
-
-    if (ret == null) return null;
-
-    Tuple3<int, int, Uint16List>? recv = CanPtl.r_modbus_read(Uint8List.fromList(ret!));
-
-    return recv?.item3;
-
-  }
-
-
-  Future<int?>  write(int slave, Uint16List argData, int addr,
-      Characteristic writer,Function listen,
-      {int retry = 3, int timeout = 1000}) async {
-    Uint8List data = CanPtl.writeRegister(slave, addr, argData);
-
-    List<int>? ret = await call(data, writer, listen);
-
-    if (ret == null) return null;
-
-    Tuple4<int, int, int, int>? recv = CanPtl.r_modbus_write(Uint8List.fromList(ret!));
-
-    return recv?.item4;
-
+  CanBleIo(BleIo bleIo){
+    SdoIo sdoIo = BlecanPtl(bleIo);
+    sdoPtl = SdoPtl(sdoIo);
   }
 
 
 
-  Future<List<int>?> call(List<int> data,Characteristic writer,Function listen, {int retry = 3, int timeout = 1000}) async {
 
+  Future<List<int>?> upload(int nodeId, int mIndex,int sIndex, {int retry = 3, int timeout = 1000}) async {
 
-    if ( deviceConnectionState != DeviceConnectionState.connected) return null;
+    return sdoPtl.upload(nodeId, mIndex, sIndex);
 
-    if (![0x00, 0x03, 0x04, 0x10].contains(data[1])) throw UnsupportedError('modbus function ${data[1]} not supported.');
+  }
 
+  Future<List<int>?> _upSeg(int mIndex,int sIndex, {int retry = 3, int timeout = 1000}) async {
 
-    var syncer = Syncer<List<int>?>();
+    SdoMsg head = SdoUpReqDirectMsg(mIndex,sIndex);
 
-    List<int> recv = [];
+    // return await bleIo.call(sData, (List<int> rData){
+    //
+    // });
 
-    listen((event) {
-      recv.addAll(event);
-
-      if (recv.length < 3) return;
-
-      if (recv[0] != data[0]) return;
-
-      if (recv[1] == data[1] + 0x80) {
-        syncer.onNotify(null);
-        return;
-      }
-
-      if (recv[0] != data[0]) return;
-
-      ByteData tmp = ByteData(data.length);
-      for(int i=0; i<data.length; i++) tmp.setUint8(i, data[i]);
-
-      if ([0x03,0x04].contains(recv[1])){
-        if (recv.length < tmp.getUint16(4)*2 + 5) return;
-      }else if([0x10].contains(recv[1])){
-        if (recv.length < 8) return;
-      }
-
-      print('recv: $recv');
-
-      syncer.onNotify(recv);
-
-    });
-    List<int>? ret;
-    try {
-      ret = await syncer.sendRetryFor(() async {
-        print('${DateTime.now()}, send: $data');
-
-        if (deviceConnectionState !=
-            DeviceConnectionState.connected) throw Exception('ble disconnected.');
-
-        recv.clear();
-
-        await writer.write(data,withResponse: false);
-        // await ble.writeCharacteristicWithoutResponse(writer, value: data);
-
-        print('${DateTime.now()}, sent: $data');
-      }, timeout: timeout, retry: retry);
-    }on Exception catch(e){
-      print('exception: $e');
-    }
-
-    listen(null);
-
-    return ret;
   }
 
 

@@ -51,7 +51,7 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
 
   }
 
-  Future<bool> connect(String deviceId) async {
+  Future<bool> connect(String deviceId,{Duration? timeout}) async {
 
     print('mark: ble connect start');
 
@@ -66,21 +66,22 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
     }
 
     this.deviceId = deviceId;
-    _connection = _ble.connectToDevice(id: deviceId, connectionTimeout: const Duration(seconds: 3)).listen(
+    _connection = _ble.connectToDevice(id: deviceId, connectionTimeout: timeout?? Duration(seconds: 5)).listen(
       (update) {
-        _logMessage(
+        print(
             'ConnectionState for device $deviceId : ${update.connectionState}');
 
       },
       onError: (Object e) =>
-          _logMessage('Connecting to device $deviceId resulted in error $e'),
+          print('Connecting to device $deviceId resulted in error $e'),
     );
 
     print('mark: connect 2');
 
-    await _ble.requestMtu(deviceId: deviceId, mtu: 256);
+    var mturet = await _ble.requestMtu(deviceId: deviceId, mtu: 256);
 
-    print('mark: connect 3');
+    print('mark: connect 3: $mturet');
+
     while(! [DeviceConnectionState.connected,DeviceConnectionState.disconnected].contains( deviceConnectionState ) ){
 
       print('mark: connect 4');
@@ -129,6 +130,51 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
     return deviceConnectionState == DeviceConnectionState.disconnected;
 
   }
+
+
+  Future<List<Characteristic?>?> discovery(Uuid serviceUuid,List<Uuid> characteristicUuids) async{
+
+    if (deviceId == null) return null;
+
+
+    var value = await discoverServices(deviceId!);
+
+    if (value == null){
+      print('discovery error!!');
+      disconnect();
+
+      return null;
+    }
+
+
+    print('discover service:');
+    print(value);
+
+    for (var e in value) {
+      print('service: ${e.id.toString()}');
+
+      if (e.id == serviceUuid) {
+        List<Characteristic?> cs = [];
+
+        for (Uuid cUuid in characteristicUuids) {
+          Characteristic? target;
+
+          for (var c in e.characteristics) {
+            if (cUuid == c.id) {
+              target = c;
+            }
+          }
+
+          cs.add(target);
+        }
+
+
+        return cs;
+      }
+    }
+
+  }
+
 
   Future<List<Service>?> discoverServices(String deviceId) async {
     try {

@@ -10,11 +10,16 @@ export 'src/modbus/modbus_ptl.dart';
 export 'src/modbus/modbus_ble_io.dart';
 
 export 'src/utils/syncer.dart';
+export 'src/utils/hex_util.dart';
 
 export 'src/ble/ble_device_connector.dart';
-export 'src/ble/ble_device_interactor.dart';
 export 'src/ble/ble_scanner.dart';
 export 'src/ble/reactive_state.dart';
+export 'src/ble/ble_status_monitor.dart';
+export 'src/ble/ble_logger.dart';
+export 'src/ble/ble_io.dart';
+
+export 'src/can/can_ble_io.dart';
 
 /// A Calculator.
 class Calculator {
