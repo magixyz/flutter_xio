@@ -1,6 +1,8 @@
 
 import 'dart:typed_data';
 
+import 'package:flutter_xio/src/register/can_args.dart';
+
 import '../enum/register_type.dart';
 import 'register_field.dart';
 
@@ -16,8 +18,9 @@ class RegisterCluster {
     int addr = json['addr'];
     int size = json['size'];
 
-
     RegisterType type = RegisterType.values.byName(json['register']);
+
+    CanArgs? canArgs = json['can'] == null?null:CanArgs.load(json['can']);
 
     Map<String,RegisterField> fields = {};
 
@@ -30,7 +33,7 @@ class RegisterCluster {
 
     String? tag = json['tag'];
 
-    return RegisterCluster(key, name, addr, size, type, fields,tag: tag);
+    return RegisterCluster(key, name, addr, size, type, fields,tag: tag,canArgs: canArgs);
   }
 
 
@@ -41,6 +44,8 @@ class RegisterCluster {
   int size;
   RegisterType registerType ;
 
+  CanArgs? canArgs;
+
   String? tag;
 
   Uint16List? readData;
@@ -48,7 +53,7 @@ class RegisterCluster {
 
   Map<String,RegisterField> fields;
 
-  RegisterCluster(this.key, this.name, this.addr,this.size ,this.registerType,this.fields,{this.tag});
+  RegisterCluster(this.key, this.name, this.addr,this.size ,this.registerType,this.fields,{this.tag,this.canArgs});
 
 
   read(Uint16List data){

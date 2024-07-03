@@ -44,6 +44,7 @@ class SyncerV1<T>{
     try{
       await sender();
     }catch(e) {
+
       print('try-catch error : $e');
 
       return null;

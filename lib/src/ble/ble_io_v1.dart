@@ -7,14 +7,14 @@ import 'package:flutter_xio/src/utils/syncer_v1.dart';
 import '../utils/syncer.dart';
 import 'ble_device_connector.dart';
 
-class BleIo{
+class BleIoV1{
   Characteristic notifier;
   Characteristic writer;
   BleDeviceConnector connector;
 
   List<Function> listens = [];
 
-  BleIo(this.notifier,this.writer,this.connector){
+  BleIoV1(this.notifier,this.writer,this.connector){
 
      this.notifier.subscribe().listen((event) {
 
@@ -34,11 +34,11 @@ class BleIo{
 
   }
 
-  Future<List<int>?> call(List<int> data,Function(List<int> nData,List<int> rData) listen, {int retry = 3, int timeout = 1000}) async {
+  Future<T?> call<T>(List<int> data,Function(List<int> nData,List<int> rData) listen, {int retry = 3, int timeout = 1000}) async {
 
     List<int> rData = [];
 
-    var syncer = SyncerV1<List<int>?>(()async{
+    var syncer = SyncerV1<T?>(()async{
 
       if ( connector.deviceConnectionState != DeviceConnectionState.connected) return null;
 

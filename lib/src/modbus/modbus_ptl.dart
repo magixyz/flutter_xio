@@ -2,6 +2,7 @@
 // https://zhuanlan.zhihu.com/p/145546574
 
 import 'dart:typed_data';
+import 'package:flutter_xio/src/modbus/modbus_def.dart';
 import 'package:tuple/tuple.dart';
 
 class ModbusPtl{
@@ -326,4 +327,5 @@ class ModbusPtl{
   static int byte2int(l,h){
     return l | (h<<8);
   }
+
 }

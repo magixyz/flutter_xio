@@ -40,12 +40,13 @@ class SdoHeadCs{
 abstract class SdoMsg{
 
   late int cs;
+  late List<int> data ;
 
   int get dumpHead;
   List<int> get dumpData;
   List<int> get dump;
 
-  SdoMsg({required this.cs});
+  SdoMsg( this.data, {required this.cs });
 
   SdoMsg.load(List<int> vs){
     
@@ -64,7 +65,8 @@ abstract class SdoDirectMsg extends SdoMsg{
   late int mIndex;
   late int sIndex;
 
-  SdoDirectMsg( this.mIndex,this.sIndex, {required super.cs});
+
+  SdoDirectMsg( this.mIndex,this.sIndex, super.data, {required super.cs});
 
   SdoDirectMsg.load(List<int> vs):super.load(vs){
     mIndex = vs[1] + (vs[2]<<8);
@@ -90,17 +92,24 @@ abstract class SdoDirectMsg extends SdoMsg{
 
     return vs;
   }
+
+  @override
+  List<int> get dumpData{
+    List<int> ret = [];
+    ret.addAll(data);
+    while(ret.length < 4) ret.add(0);
+
+    return ret;
+  }
 }
 
 abstract class SdoSegMsg extends SdoMsg{
 
-  late List<int> seg;
+  // late List<int> seg;
 
-  SdoSegMsg( this.seg,{required super.cs} );
+  SdoSegMsg( super.data, {required super.cs} );
 
-  SdoSegMsg.load(List<int> vs):super.load(vs){
-    seg = vs.sublist(1);
-  }
+  SdoSegMsg.load(List<int> vs):super.load(vs);
 
 
   @override
@@ -108,9 +117,18 @@ abstract class SdoSegMsg extends SdoMsg{
     List<int> vs = [];
 
     vs.add(dumpHead);
-    vs.addAll(seg);
+    vs.addAll(dumpData);
 
     return vs;
+  }
+
+  @override
+  List<int> get dumpData{
+    List<int> ret = [];
+    ret.addAll(data);
+    while(ret.length < 7) ret.add(0);
+
+    return ret;
   }
 }
 
@@ -134,7 +152,8 @@ class SdoDownReqDirectMsg extends SdoDirectMsg{
   // 1: 数据集大小明确指出
   late int s ;
 
-  SdoDownReqDirectMsg(this.n,this.e,this.s,super.mIndex,super.sIndex,{super.cs=ccs });
+
+  SdoDownReqDirectMsg(this.n,this.e,this.s,super.mIndex,super.sIndex,super.data,{super.cs=ccs });
 
   SdoDownReqDirectMsg.load(List<int> vs):super.load(vs){
 
@@ -160,10 +179,7 @@ class SdoDownReqDirectMsg extends SdoDirectMsg{
     return v;
   }
 
-  @override
-  List<int> get dumpData{
-    return [0,0,0,0];
-  }
+
 
 
 }
@@ -172,10 +188,14 @@ class SdoDownRespDirectMsg extends SdoDirectMsg{
   static const int scs = 3;
   int x = 0;
 
-
-  SdoDownRespDirectMsg(super.mIndex,super.sIndex,{super.cs=scs});
+  SdoDownRespDirectMsg(super.mIndex,super.sIndex,super.data,{super.cs=scs});
   
-  SdoDownRespDirectMsg.load(List<int> vs):super.load(vs);
+  SdoDownRespDirectMsg.load(List<int> vs):super.load(vs){
+
+    if (scs != cs) throw Exception('cs error, $scs != $cs ');
+
+    data = [];
+  }
   
   @override
   int get dumpHead{
@@ -185,10 +205,6 @@ class SdoDownRespDirectMsg extends SdoDirectMsg{
     return v;
   }
 
-  @override
-  List<int> get dumpData{
-    return [0,0,0,0];
-  }
 
 }
 
@@ -209,7 +225,7 @@ class SdoDownReqSegMsg extends SdoSegMsg{
   // 1: 没有更多的分段需要被下载
   late int c ;
 
-  SdoDownReqSegMsg(this.t,this.n,this.c ,super.seg,{super.cs=ccs});
+  SdoDownReqSegMsg(this.t,this.n,this.c ,super.data,{super.cs=ccs});
 
   SdoDownReqSegMsg.load(List<int> vs):super.load(vs.sublist(1,8)){
     int v = vs[0];
@@ -231,11 +247,6 @@ class SdoDownReqSegMsg extends SdoSegMsg{
     return v;
   }
 
-  @override
-  List<int> get dumpData{
-    return [0,0,0,0];
-  }
-
 
 }
 
@@ -248,7 +259,7 @@ class SdoDownRespSegMsg extends SdoSegMsg {
   // [3,2,1,0]
   late int x = 0;
 
-  SdoDownRespSegMsg( this.t , super.seg, {super.cs=scs});
+  SdoDownRespSegMsg( this.t , super.data, {super.cs=scs});
 
   SdoDownRespSegMsg.load(List<int> vs):super.load(vs){
     int v = vs[0];
@@ -264,10 +275,6 @@ class SdoDownRespSegMsg extends SdoSegMsg {
     return v;
   }
 
-  @override
-  List<int> get dumpData{
-    return [0,0,0,0];
-  }
 
 }
 
@@ -277,9 +284,11 @@ class SdoUpReqDirectMsg extends SdoDirectMsg {
  int x = 0;
 
 
- SdoUpReqDirectMsg( super.mIndex,super.sIndex, {super.cs= ccs});
+ SdoUpReqDirectMsg( super.mIndex,super.sIndex,super.data, {super.cs= ccs});
 
- SdoUpReqDirectMsg.load(List<int> vs):super.load(vs);
+ SdoUpReqDirectMsg.load(List<int> vs):super.load(vs){
+   data = [];
+ }
 
  @override
  int get dumpHead{
@@ -287,11 +296,6 @@ class SdoUpReqDirectMsg extends SdoDirectMsg {
    v |= ccs << 5;
 
    return v;
- }
-
- @override
- List<int> get dumpData{
-   return [0,0,0,0];
  }
 
 }
@@ -315,9 +319,7 @@ class SdoUpRespDirectMsg extends SdoDirectMsg {
   // 1: 数据集大小明确指出
   late int s ;
 
-  late List<int> data;
-
-  SdoUpRespDirectMsg( this.n,this.e,this.s ,super.mIndex,super.sIndex,this.data, {super.cs= scs});
+  SdoUpRespDirectMsg( this.n,this.e,this.s ,super.mIndex,super.sIndex,super.data, {super.cs= scs});
 
   SdoUpRespDirectMsg.load(List<int> vs):super.load(vs ){
     int v = vs[0];
@@ -344,10 +346,6 @@ class SdoUpRespDirectMsg extends SdoDirectMsg {
     return v;
   }
 
-  @override
-  List<int> get dumpData{
-    return [0,0,0,0];
-  }
 
 }
 
@@ -361,7 +359,7 @@ class SdoUpReqSegMsg extends SdoSegMsg {
   // [3,2,1,0]
   late int x = 0;
 
-  SdoUpReqSegMsg(this.t, super.seg,{super.cs= scs});
+  SdoUpReqSegMsg(this.t, super.data,{super.cs= scs});
 
   SdoUpReqSegMsg.load(List<int> vs):super.load(vs){
     int v = vs[0];
@@ -377,11 +375,6 @@ class SdoUpReqSegMsg extends SdoSegMsg {
     v |= t << 4;
 
     return v;
-  }
-
-  @override
-  List<int> get dumpData{
-    return [0,0,0,0];
   }
 
 }
@@ -403,9 +396,7 @@ class SdoUpRespSegMsg extends SdoSegMsg {
   // 1: 没有更多的分段需要被下载
   late int c ;
 
-  late List<int> data;
-
-  SdoUpRespSegMsg(this.t,this.n,this.c, super.seg, {super.cs=scs});
+  SdoUpRespSegMsg(this.t,this.n,this.c, super.data, {super.cs=scs});
 
   SdoUpRespSegMsg.load(List<int> vs):super.load(vs){
     int v = vs[0];
@@ -425,17 +416,6 @@ class SdoUpRespSegMsg extends SdoSegMsg {
     v |= c;
 
     return v;
-  }
-
-  @override
-  List<int> get dumpData{
-
-    List<int> ret = [];
-    ret.addAll(data);
-
-    while(ret.length < 7) ret.add(0);
-
-    return ret;
   }
 
 }

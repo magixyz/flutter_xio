@@ -152,10 +152,18 @@ class _DeviceWidgetState extends State<DeviceWidget> {
             },),
             ListTile(title: Text('can ble upload'),onTap: ()async{
 
-              List<int>? ret = await canBleIo?.upload(6, 0x6000, 0x01);
+              List<int>? ret = await canBleIo?.upload(6, 0x60c0, 0x01);
 
 
-              print('>>>>>>>> ${ HexUtil.byte2hex(ret??[])}');
+              print('>>>>>>>> upload: ${ HexUtil.byte2hex(ret??[])}');
+
+            },),
+            ListTile(title: Text('can ble download'),onTap: ()async{
+
+              bool? ret = await canBleIo?.download(6, 0x60c0, 0x01, HexUtil.hex2byte('b80b2c01d007e803d007e803b80be02ee8030000b80b2c01d007e803d007e803b80be02ee8030000b80b2c01d007e803d007e803b80be02ee8030000b80b2c01d007e803d007e803b80be02ee8030000b80b2c01d007e803d007e803b80be02ee8030000dc052c01e8032003e803e803b80be02ee8030000'));
+
+
+              print('>>>>>>>> download: ${ ret }');
 
             },)
           ],
