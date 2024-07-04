@@ -28,15 +28,25 @@ class CanBleIo extends SdoIo{
 
   Future<List<int>?> upload(int nodeId, int mIndex,int sIndex, {int retry = 3, int timeout = 1000}) async {
 
-    print('m index: $mIndex , s index: $sIndex');
+    print('upload, m index: $mIndex , s index: $sIndex');
 
-    return sdoPtl.upload(nodeId, mIndex, sIndex);
+    var ret = await sdoPtl.upload(nodeId, mIndex, sIndex);
 
+    print('upload, ret: $ret');
+
+
+    return ret;
   }
 
   Future<bool> download(int nodeId, int mIndex,int sIndex, List<int> data, {int retry = 3, int timeout = 1000}) async {
 
-    return sdoPtl.download(nodeId, mIndex, sIndex,data);
+    print('download, m index: $mIndex , s index: $sIndex');
+
+    var ret = await sdoPtl.download(nodeId, mIndex, sIndex,data);
+
+    print('download, ret: $ret');
+
+    return ret;
 
   }
 
