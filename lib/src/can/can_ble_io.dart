@@ -28,6 +28,8 @@ class CanBleIo extends SdoIo{
 
   Future<List<int>?> upload(int nodeId, int mIndex,int sIndex, {int retry = 3, int timeout = 1000}) async {
 
+    print('m index: $mIndex , s index: $sIndex');
+
     return sdoPtl.upload(nodeId, mIndex, sIndex);
 
   }
@@ -45,11 +47,14 @@ class CanBleIo extends SdoIo{
     List<int> sData = utf8.encode(BlecanReqMsg(SdoReqCanId(nodeId), data).dump());
     List<int> respHead = utf8.encode(SdoRespCanId(nodeId).dump());
 
+
+    print( '${DateTime.now()}: call start , delay test');
+
     List<int>? rData = await bleIo.call(sData, (List<int> nData,List<int> rData){
 
-      print('can ble io ndata: $nData');
+      // print('can ble io ndata: $nData');
 
-      if( ! listEquals(nData.sublist(1,respHead.length + 1), respHead)) return null;
+      if( nData[0] != 116 || ! listEquals(nData.sublist(1,respHead.length + 1), respHead)) return null;
 
 
       rData.addAll(nData);
@@ -68,6 +73,8 @@ class CanBleIo extends SdoIo{
         return null;
       }
     });
+
+    print( '${DateTime.now()}: call end , delay test');
 
     if (rData == null) return null;
 

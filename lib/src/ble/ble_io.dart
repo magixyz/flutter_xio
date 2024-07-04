@@ -2,6 +2,7 @@
 import 'dart:convert';
 
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+import 'package:flutter_xio/flutter_xio.dart';
 import 'package:flutter_xio/src/utils/syncer_v1.dart';
 
 import '../utils/syncer.dart';
@@ -19,7 +20,13 @@ class BleIo{
      this.notifier.subscribe().listen((event) {
 
 
-       // print('notify: ' + utf8.decode(event));
+       if (event[0] == 116) {
+         if (!utf8.decode(event).startsWith(RegExp(r't[1234]868'))) {
+           print('notify: ' + utf8.decode(event));
+         }
+       }else{
+         print('notify: ' + HexUtil.byte2hex(event));
+       }
 
        // if (utf8.decode(event).startsWith(RegExp(r't[1234]868'))){
        //   return;

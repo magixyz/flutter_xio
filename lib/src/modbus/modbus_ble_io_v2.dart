@@ -3,8 +3,6 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
-import 'package:flutter_xio/src/utils/steam_relay.dart';
 import 'package:tuple/tuple.dart';
 
 import '../ble/ble_io.dart';
@@ -12,7 +10,7 @@ import '../utils/syncer.dart';
 import 'modbus_ptl.dart';
 import '../enum/register_type.dart';
 
-class ModbusBleIoV2{
+class ModbusBleIoV2 {
 
   BleIo bleIo;
 
@@ -20,7 +18,6 @@ class ModbusBleIoV2{
   ModbusBleIoV2(this.bleIo);
 
   Future<Uint16List?> read(int slave, RegisterType rtype, int addr, int size,
-    Characteristic writer,
       {int retry = 3, int timeout = 1000}) async {
     Uint8List data;
     switch (rtype) {
@@ -34,7 +31,7 @@ class ModbusBleIoV2{
         throw UnsupportedError('Unsupported register type: $rtype');
     }
 
-    List<int>? ret = await call(data, writer);
+    List<int>? ret = await call(data);
 
     if (ret == null) return null;
 
@@ -46,11 +43,10 @@ class ModbusBleIoV2{
 
 
   Future<int?>  write(int slave, Uint16List argData, int addr,
-      Characteristic writer,
       {int retry = 3, int timeout = 1000}) async {
     Uint8List data = ModbusPtl.writeRegister(slave, addr, argData);
 
-    List<int>? ret = await call(data, writer);
+    List<int>? ret = await call(data);
 
     if (ret == null) return null;
 
@@ -62,7 +58,7 @@ class ModbusBleIoV2{
 
 
 
-  Future<List<int>?> call(List<int> data,Characteristic writer, {int retry = 3, int timeout = 1000}) async {
+  Future<List<int>?> call(List<int> data,{int retry = 3, int timeout = 1000}) async {
     List<int> sData = data;
 
     List<int>? rData = await bleIo.call(

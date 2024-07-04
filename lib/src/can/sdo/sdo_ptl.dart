@@ -14,29 +14,29 @@ class SdoPtl{
 
   SdoPtl(this.sdoIo);
 
-  static dynamic decodeResp(List<int> vs){
-
-    int v = vs[0];
-    
-    int cs = SdoHeadCs.rslvHeadCs(v);
-
-
-    print('cs: $cs');
-
-    switch(cs){
-      case SdoDownRespDirectMsg.scs:
-        return SdoDownRespDirectMsg.load(vs);
-      case SdoDownRespSegMsg.scs:
-        return SdoDownRespSegMsg.load(vs);
-      case SdoUpRespDirectMsg.scs:
-        return SdoUpRespDirectMsg.load(vs);
-      case SdoUpRespSegMsg.scs:
-        return SdoUpRespSegMsg.load(vs);
-      default:
-        return null;
-    }
-
-  }
+  // static dynamic decodeResp(List<int> vs){
+  //
+  //   int v = vs[0];
+  //
+  //   int cs = SdoHeadCs.rslvHeadCs(v);
+  //
+  //
+  //   print('cs: $cs');
+  //
+  //   switch(cs){
+  //     case SdoDownRespDirectMsg.scs:
+  //       return SdoDownRespDirectMsg.load(vs);
+  //     case SdoDownRespSegMsg.scs:
+  //       return SdoDownRespSegMsg.load(vs);
+  //     case SdoUpRespDirectMsg.scs:
+  //       return SdoUpRespDirectMsg.load(vs);
+  //     case SdoUpRespSegMsg.scs:
+  //       return SdoUpRespSegMsg.load(vs);
+  //     default:
+  //       return null;
+  //   }
+  //
+  // }
 
   // static List<int> encodeUpReq(int mIndex,int sIndex){
   //
@@ -49,6 +49,8 @@ class SdoPtl{
 
 
   Future<List<int>?> upload(int nodeId, int mIndex,int sIndex, {int retry = 3, int timeout = 1000}) async {
+
+    print( '${DateTime.now()}: upload start , delay test');
 
     SdoUpReqDirectMsg uqd = SdoUpReqDirectMsg(mIndex,sIndex,[]);
     List<int>? rData = await sdoIo.call(nodeId, uqd.dump);
@@ -92,6 +94,10 @@ class SdoPtl{
       print('uss c: ${uss.c}');
 
       if (uss.c == 1){
+
+
+        print( '${DateTime.now()}: upload end , delay test');
+
         return rSegData;
       }
 

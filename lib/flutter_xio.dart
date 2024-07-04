@@ -22,6 +22,7 @@ export 'src/ble/ble_logger.dart';
 export 'src/ble/ble_io.dart';
 
 export 'src/can/can_ble_io.dart';
+export 'src/can/blecan_ptl.dart';
 
 /// A Calculator.
 class Calculator {
