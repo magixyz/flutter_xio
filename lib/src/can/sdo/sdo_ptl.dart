@@ -14,39 +14,6 @@ class SdoPtl{
 
   SdoPtl(this.sdoIo);
 
-  // static dynamic decodeResp(List<int> vs){
-  //
-  //   int v = vs[0];
-  //
-  //   int cs = SdoHeadCs.rslvHeadCs(v);
-  //
-  //
-  //   print('cs: $cs');
-  //
-  //   switch(cs){
-  //     case SdoDownRespDirectMsg.scs:
-  //       return SdoDownRespDirectMsg.load(vs);
-  //     case SdoDownRespSegMsg.scs:
-  //       return SdoDownRespSegMsg.load(vs);
-  //     case SdoUpRespDirectMsg.scs:
-  //       return SdoUpRespDirectMsg.load(vs);
-  //     case SdoUpRespSegMsg.scs:
-  //       return SdoUpRespSegMsg.load(vs);
-  //     default:
-  //       return null;
-  //   }
-  //
-  // }
-
-  // static List<int> encodeUpReq(int mIndex,int sIndex){
-  //
-  //   SdoMsg msg = SdoUpReqDirectMsg(mIndex,sIndex);
-  //
-  //   return msg.dump;
-  //
-  // }
-
-
 
   Future<List<int>?> upload(int nodeId, int mIndex,int sIndex, {int retry = 3, int timeout = 1000}) async {
 
@@ -163,10 +130,60 @@ class SdoPtl{
       }
     }
 
-
-
-
-
   }
 
+
+
+  Future<bool> blkDown(int nodeId, int mIndex,int sIndex, List<int> data, {int retry = 3, int timeout = 1000}) async {
+
+      ByteData bd = ByteData(4);
+      bd.setUint32(0 ,data.length ,Endian.little);
+      List<int> dd = bd.buffer.asUint8List();
+
+
+      SdoBlkDownStartReqMsg bdsq = SdoBlkDownStartReqMsg(data.length);
+      List<int>? rData = await sdoIo.call(nodeId, bdsq.buffer);
+      if (rData == null) return false;
+      SdoBlkDownStartResMsg? bdss = Catcher.call<SdoBlkDownStartResMsg>(()=>SdoBlkDownStartResMsg(Uint8List.fromList(rData!)));
+      if (bdss == null ) return false;
+
+      print('blk start: ${bdss.blksize}');
+
+      int blksize = bdss.blksize;
+      int index = 0;
+
+      while( index + 7 < data.length ){
+
+        print('blk data: $index');
+
+        int c = index + 14 >= data.length ? 1:0 ;
+
+        int seqno = (index~/7)  % blksize ;
+
+        List<int> sData = data.sublist(index, index + 7);
+
+        SdoBlkDownIngReqMsg bdiq = SdoBlkDownIngReqMsg( c,  seqno , sData);
+
+        rData = await sdoIo.call(nodeId, bdiq.buffer);
+        if (rData == null) return false;
+
+        SdoBlkDownIngResMsg? bdis = Catcher.call<SdoBlkDownIngResMsg>(()=>SdoBlkDownIngResMsg(Uint8List.fromList(rData!)));
+        if (bdis == null) return false;
+
+        print('ack: ${bdis.ackseq}');
+
+        index += 7;
+
+      }
+
+      SdoBlkDownEndReqMsg bddq = SdoBlkDownEndReqMsg(7 - (data.length - index) ,0);
+      rData = await sdoIo.call(nodeId, bddq.buffer);
+      if (rData == null) return false;
+      SdoBlkDownEndResMsg? bdes = Catcher.call<SdoBlkDownEndResMsg>(()=>SdoBlkDownEndResMsg(Uint8List.fromList(rData!)));
+
+      print('blk end: ${bdes?.ss}');
+
+      return true;
+
+  }
 }

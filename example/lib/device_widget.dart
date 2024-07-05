@@ -165,6 +165,14 @@ class _DeviceWidgetState extends State<DeviceWidget> {
 
               print('>>>>>>>> download: ${ ret }');
 
+            },),
+            ListTile(title: Text('can ble blk down'),onTap: ()async{
+
+              bool? ret = await canBleIo?.blkDown(6, 0x60c0, 0x01, HexUtil.hex2byte('b80b2c01d007e803d007e803b80be02ee8030000b80b2c01d007e803d007e803b80be02ee8030000b80b2c01d007e803d007e803b80be02ee8030000b80b2c01d007e803d007e803b80be02ee8030000b80b2c01d007e803d007e803b80be02ee8030000dc052c01e8032003e803e803b80be02ee8030000'));
+
+
+              print('>>>>>>>> download: ${ ret }');
+
             },)
           ],
         ),

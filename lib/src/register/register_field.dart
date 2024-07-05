@@ -11,7 +11,7 @@ enum FieldType{
 
 abstract class RegisterField {
 
-  static RegisterField instance(String key, Map<String,dynamic> json){
+  factory RegisterField.instance(String key, Map<String,dynamic> json){
 
     FieldType type = FieldType.values.byName(json['type']);
 
@@ -39,7 +39,7 @@ abstract class RegisterField {
         ByteLoc bytePos = ByteLoc.values.byName(json['byte_pos']);
         return ByteField(key, type,name,offset,size,bytePos,tag: tag,selection: selection);
       case FieldType.bits:
-        List<int> bitsRange = json['bits_range'];
+        List<dynamic> bitsRange = json['bits_range'];
         return BitsField(key, type,name,offset,size, bitsRange ,tag: tag,selection: selection);
       case FieldType.bit:
         int bitPos = json['bit_pos'];
@@ -167,7 +167,7 @@ class IntField extends RegisterField{
   IntField(String key, FieldType type, String? name, int addr,int size,
       {String? tag, List? selection})
       :super(key,type,name,addr,size){
-    if (2 != size) throw Exception("The int type's size should be 2 in the json.");
+    if (2 != size) throw Exception("The int type's size should be 2 in the json.but is:$size");
   }
 
   @override
@@ -185,7 +185,7 @@ class UintField extends RegisterField{
   UintField(String key, FieldType type, String? name, int addr,int size,
       {String? tag, List? selection})
       :super(key,type,name,addr,size){
-    if (2 != size) throw Exception("The int type's size should be 2 in the json.");
+    if (2 != size) throw Exception("The uint type's size should be 2 in the json.");
   }
 
   @override
@@ -289,7 +289,7 @@ class BitField extends RegisterField{
 
 class BitsField extends RegisterField{
 
-  List<int> bitsRange;
+  List<dynamic> bitsRange;
 
   late int mask;
 

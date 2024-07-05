@@ -50,6 +50,18 @@ class CanBleIo extends SdoIo{
 
   }
 
+  Future<bool> blkDown(int nodeId, int mIndex,int sIndex, List<int> data, {int retry = 3, int timeout = 1000}) async {
+
+    print('blk down, m index: $mIndex , s index: $sIndex');
+
+    var ret = await sdoPtl.blkDown(nodeId, mIndex, sIndex,data);
+
+    print('blk down, ret: $ret');
+
+    return ret;
+
+  }
+
 
   @override
   Future<List<int>?> call(int nodeId, List<int> data) async{

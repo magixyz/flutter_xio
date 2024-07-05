@@ -1,41 +1,24 @@
 
+import 'dart:typed_data';
+
 import 'package:flutter_xio/src/utils/hex_util.dart';
 
-class SdoHeadCs{
-  static int rslvHeadCs(int v){
 
-    print('cs v1: $v');
+mixin class SdoIndex{
+  late int mIndex;
+  late int sIndex;
 
-    int cs = (v>>5) & 0x07;
+  void loadIndex(List<int> index){
 
+    mIndex = index[0] + (index[1]<<8);
+    sIndex = index[2];
+  }
 
-    print('cs v2: $cs');
+  List<int> dumpIndex(){
 
-    return cs;
+    return [mIndex & 0xff,mIndex >> 8,sIndex];
   }
 }
-//
-// class SdoIndex{
-//   late int mIndex;
-//   late int sIndex;
-//
-//   SdoIndex(this.mIndex,this.sIndex);
-//
-//   SdoIndex.load(List<int> index){
-//
-//     mIndex = index[0] + (index[1]<<8);
-//     sIndex = index[2];
-//   }
-//
-//   List<int> get dump{
-//     List<int> vs = [];
-//     vs.add(mIndex & 0xff);
-//     vs.add(mIndex >> 8) ;
-//     vs.add(sIndex);
-//
-//     return vs;
-//   }
-// }
 
 abstract class SdoMsg{
 
@@ -74,12 +57,8 @@ abstract class SdoDirectMsg extends SdoMsg{
   }
 
   List<int> get dumpIndex{
-    List<int> vs = [];
-    vs.add(mIndex & 0xff);
-    vs.add(mIndex >> 8) ;
-    vs.add(sIndex);
+    return [mIndex & 0xff,mIndex >> 8,sIndex];
 
-    return vs;
   }
 
   @override
@@ -416,6 +395,185 @@ class SdoUpRespSegMsg extends SdoSegMsg {
     v |= c;
 
     return v;
+  }
+
+}
+
+
+abstract class SdoReqMsgV1{
+
+  int ccs;
+
+  Uint8List buffer = Uint8List(8);
+
+  SdoReqMsgV1( {required this.ccs });
+
+  void dumpHead();
+
+}
+
+abstract class SdoResMsgV1{
+
+  int scs;
+
+  Uint8List buffer = Uint8List(8);
+
+  SdoResMsgV1(this.buffer,{required this.scs});
+
+  void loadHead();
+
+}
+
+mixin class SdoBlkSize{
+  late int size;
+
+  void loadSize(List<int> vs){
+
+    if (vs.length != 4) throw Exception('size list length should be 4, but is: $vs');
+
+    size = vs[0] + (vs[1] << 0x10) + (vs[2] << 0x20) + (vs[3] << 0x30) ;
+  }
+
+  List<int> dumpSize(){
+
+    if (size < 0 || size > 0xffffffff ) throw Exception('size should between 0-0xffffffff, but is: $size');
+
+    return [size & 0xff, size >> 0x10 & 0xff, size >> 0x20 & 0xff, size >> 0x30 & 0xff ];
+  }
+}
+
+class SdoBlkDownStartReqMsg extends SdoReqMsgV1 with SdoIndex,SdoBlkSize{
+
+  static const int CCS = 6;
+
+  late int x = 0;
+  late int cc ;
+  late int s ;
+  late int cs = 0;
+
+  late int size;
+
+  SdoBlkDownStartReqMsg( this.size,{this.cc=1,this.s=1 , super.ccs = CCS}){
+    dumpHead();
+    buffer.setRange(1, 4, dumpIndex());
+    buffer.setRange(4,8, dumpSize());
+  }
+
+
+  @override
+  void dumpHead() {
+    buffer[0] = ccs<<0x05 | x<<0x03 | cc<<0x02 | s<<0x01 | cs;
+  }
+
+}
+
+
+class SdoBlkDownStartResMsg extends SdoResMsgV1 with SdoIndex,SdoBlkSize{
+
+  static const int SCS = 5;
+
+  late int x = 0;
+  late int sc;
+  late int ss;
+
+  late int blksize;
+
+  SdoBlkDownStartResMsg(super.buffer):super(scs: SCS){
+    loadHead();
+    loadIndex(buffer.sublist(1,4));
+    loadSize(buffer.sublist(4,8));
+  }
+
+  @override
+  void loadHead() {
+    sc = buffer[0] >> 2 & 0x01;
+    ss = buffer[0] & 0x03;
+  }
+
+}
+
+
+class SdoBlkDownIngReqMsg extends SdoReqMsgV1{
+
+  static const int CCS = 0;
+
+  late int c;
+  late int seqno;
+  late List<int> data;
+
+  SdoBlkDownIngReqMsg(this.c,this.seqno,this.data,{super.ccs = CCS}){
+    dumpHead();
+    buffer.setRange(1, 8, data);
+  }
+
+
+  @override
+  void dumpHead() {
+    buffer[0] = c<<0x07 | seqno&0x7f ;
+  }
+
+}
+
+
+class SdoBlkDownIngResMsg extends SdoResMsgV1 {
+
+  static const int SCS = 5;
+
+  late int ss;
+  late int ackseq;
+  late int blksize;
+
+  SdoBlkDownIngResMsg(super.buffer):super(scs: SCS){
+    loadHead();
+    ackseq = buffer[1];
+    blksize = buffer[2];
+  }
+
+  @override
+  void loadHead() {
+    ss = buffer[0] & 0x03;
+  }
+
+}
+
+
+class SdoBlkDownEndReqMsg extends SdoReqMsgV1 {
+
+  static const int CCS = 6;
+
+  late int n;
+  late int x = 0;
+  late int cs = 1;
+  late int crc;
+
+  SdoBlkDownEndReqMsg(this.n,this.crc,{super.ccs = CCS}){
+    dumpHead();
+    // buffer.setRange(1, 3, [crc]);
+  }
+
+
+  @override
+  void dumpHead() {
+    buffer[0] = ccs<<0x05 | n<<0x02 | cs ;
+  }
+
+}
+
+
+class SdoBlkDownEndResMsg extends SdoResMsgV1 {
+
+  static const int SCS = 5;
+
+  late int x = 0;
+  late int ss;
+
+  SdoBlkDownEndResMsg(super.buffer):super(scs: SCS){
+    loadHead();
+  }
+
+  @override
+  void loadHead() {
+    ss = buffer[0] & 0x03;
   }
 
 }
