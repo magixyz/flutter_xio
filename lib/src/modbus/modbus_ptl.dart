@@ -7,9 +7,9 @@ import 'package:tuple/tuple.dart';
 
 class ModbusPtl{
 
-  static Uint8List modbusWriteMultiRegister(int slave, int start, Uint16List value){
-    return rtu0x10(slave, start, value);
-  }
+  // static Uint8List modbusWriteMultiRegister(int slave, int start, Uint16List value){
+  //   return rtu0x10(slave, start, value);
+  // }
 
 
   static Uint8List rtu0x10(int slave, int start, Uint16List value){
@@ -135,16 +135,16 @@ class ModbusPtl{
   }
 
 
-  static Uint8List readZeroRegister(int slave){
-    Uint8List data = Uint8List(4);
-
-    data[0] = 0x00;
-    data[1] = 0x00;
-    data[2] = 0x00;
-    data[3] = 0x0a;
-
-    return modbus(slave, 0x03, data);
-  }
+  // static Uint8List readZeroRegister(int slave){
+  //   Uint8List data = Uint8List(4);
+  //
+  //   data[0] = 0x00;
+  //   data[1] = 0x00;
+  //   data[2] = 0x00;
+  //   data[3] = 0x0a;
+  //
+  //   return modbus(slave, 0x03, data);
+  // }
 
 
 
@@ -169,79 +169,79 @@ class ModbusPtl{
 
   }
 
-  static Uint8List callRegister(int slave, Uint16List data){
+  // static Uint8List callRegister(int slave, Uint16List data){
+  //
+  //
+  //   return writeRegister(slave, 0, data);
+  //
+  // }
+
+  // static Uint8List callRegisterWithAddress(int slave, int address, Uint16List data){
+  //
+  //
+  //   return writeRegister(slave, address, data);
+  //
+  // }
+
+  // static Uint8List saveRegister(int slave){
+  //
+  //   Uint16List saveRegs = Uint16List.fromList([0x11,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00]);
+  //   // Uint8List data = register2byte(SAVE_REGS);
+  //
+  //   return writeRegister(slave, 0, saveRegs);
+  //
+  // }
 
 
-    return writeRegister(slave, 0, data);
-
-  }
-
-  static Uint8List callRegisterWithAddress(int slave, int address, Uint16List data){
-
-
-    return writeRegister(slave, address, data);
-
-  }
-
-  static Uint8List saveRegister(int slave){
-
-    Uint16List saveRegs = Uint16List.fromList([0x11,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00]);
-    // Uint8List data = register2byte(SAVE_REGS);
-
-    return writeRegister(slave, 0, saveRegs);
-
-  }
-
-
-  static Uint8List upgradeStartByAddr(int slave, Uint8List addr ){
-    assert(addr.length == 4);
-
-    return iap2modbus(slave,0x10,iap(0x70,0x00,0x00,addr)) ;
-  }
+  // static Uint8List upgradeStartByAddr(int slave, Uint8List addr ){
+  //   assert(addr.length == 4);
+  //
+  //   return iap2modbus(slave,0x10,iap(0x70,0x00,0x00,addr)) ;
+  // }
 
 
 
-  static Uint8List iap(int type,int subtype, int sn , Uint8List data ){
-    assert(data.length <= 16);
+  // static Uint8List iap(int type,int subtype, int sn , Uint8List data ){
+  //   assert(data.length <= 16);
+  //
+  //   var todata = Uint8List(20);
+  //   todata[0] = type;
+  //   todata[1] = (subtype & 0x0f) + ((data.length-1) << 4) ;
+  //   todata[2] = sn;
+  //   for (int i=0; i<data.length;i++) {
+  //     todata[3+i] = data[i];
+  //   }
+  //
+  //   crc8(todata);
+  //
+  //   return todata;
+  // }
 
-    var todata = Uint8List(20);
-    todata[0] = type;
-    todata[1] = (subtype & 0x0f) + ((data.length-1) << 4) ;
-    todata[2] = sn;
-    for (int i=0; i<data.length;i++) {
-      todata[3+i] = data[i];
-    }
 
-    crc8(todata);
-
-    return todata;
-  }
-
-
-  static Uint8List iap2modbus(int slave,int func, Uint8List data){
-
-    assert(data.length == 20);
-
-    var todata = Uint8List(25);
-
-    todata[0] = 0;
-    todata[1] = 0;
-    todata[2] = 0;
-    todata[3] = 0x0a;
-    todata[4] = 0x14;
-
-    for(var i=0; i<data.length; i++){
-      var b = data[i];
-      if (i%2 == 0){
-        todata[6+i] = b;
-      }else{
-        todata[4+i] = b;
-      }
-    }
-
-    return modbus(slave, func, todata);
-
-  }
+  // static Uint8List iap2modbus(int slave,int func, Uint8List data){
+  //
+  //   assert(data.length == 20);
+  //
+  //   var todata = Uint8List(25);
+  //
+  //   todata[0] = 0;
+  //   todata[1] = 0;
+  //   todata[2] = 0;
+  //   todata[3] = 0x0a;
+  //   todata[4] = 0x14;
+  //
+  //   for(var i=0; i<data.length; i++){
+  //     var b = data[i];
+  //     if (i%2 == 0){
+  //       todata[6+i] = b;
+  //     }else{
+  //       todata[4+i] = b;
+  //     }
+  //   }
+  //
+  //   return modbus(slave, func, todata);
+  //
+  // }
 
   static Uint8List modbus(int slave, int func , Uint8List data){
 
