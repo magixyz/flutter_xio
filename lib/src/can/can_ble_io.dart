@@ -70,7 +70,10 @@ class CanBleIo extends SdoIo{
     List<int> respHead = utf8.encode(SdoRespCanId(nodeId).dump());
 
 
-    print( '${DateTime.now()}: call start , delay test');
+    // print( '${DateTime.now()}: call start , delay test');
+
+    print('send data: ${utf8.decode(sData)}');
+
 
     List<int>? rData = await bleIo.call(sData, (List<int> nData,List<int> rData){
 
@@ -94,7 +97,7 @@ class CanBleIo extends SdoIo{
 
         return null;
       }
-    });
+    },timeout: 10000);
 
     print( '${DateTime.now()}: call end , delay test');
 
@@ -103,6 +106,23 @@ class CanBleIo extends SdoIo{
     BlecanRespMsg rMsg = BlecanRespMsg.load(utf8.decode(rData));
 
     return rMsg.data;
+  }
+
+  @override
+  Future<bool> callWithoutRes(int nodeId, List<int> data) async{
+
+    List<int> sData = utf8.encode(BlecanReqMsg(SdoReqCanId(nodeId), data).dump());
+    List<int> respHead = utf8.encode(SdoRespCanId(nodeId).dump());
+
+
+    // print( '${DateTime.now()}: call start , delay test');
+
+    print('send data: ${utf8.decode(sData)}');
+
+
+    bool ret = await bleIo.callWithoutRes(sData);
+
+    return ret;
   }
 
 }

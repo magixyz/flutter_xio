@@ -51,7 +51,7 @@ class SyncerV1<T>{
     }
     timer = Timer(Duration(milliseconds: timeout),()  {
 
-      print('${DateTime.now()}, Timer actived..');
+      print('${DateTime.now()}, Timer actived.. timeout:${timeout}');
       if (!_completer.isCompleted){
         _completer.complete(null);
       }

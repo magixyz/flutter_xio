@@ -59,11 +59,21 @@ class BleIo{
 
     listens.add(syncer.notify);
 
-    var ret = await syncer.call();
+    var ret = await syncer.call(timeout: timeout);
 
     listens.remove(syncer.notify);
 
     return ret;
+
+  }
+
+
+  Future<bool> callWithoutRes(List<int> data) async {
+
+
+    await writer.write(data,withResponse: true);
+
+    return true;
 
   }
 

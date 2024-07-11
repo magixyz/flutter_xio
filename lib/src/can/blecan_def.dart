@@ -18,9 +18,6 @@ abstract class CanId{
 
   String dump(){
     String ret = canId.toRadixString(16);
-
-    print('can id: $ret');
-
     return ret;
   }
 

@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:crclib/catalog.dart';
 import 'package:flutter_xio/src/can/sdo/sdo_def.dart';
 import 'package:flutter_xio/src/can/sdo/sdo_io.dart';
 import 'package:flutter_xio/src/utils/catcher.dart';
@@ -136,12 +137,33 @@ class SdoPtl{
 
   Future<bool> blkDown(int nodeId, int mIndex,int sIndex, List<int> data, {int retry = 3, int timeout = 1000}) async {
 
+    var crc = Crc16Acorn().convert(data);
+
+
+    print('blk down data: $data');
+    // var ccc = [
+    //   Crc16A().convert(utf8.encode('123456789')),
+    //   Crc16Acorn().convert(utf8.encode('123456789')),
+    //   Crc16Arc().convert(utf8.encode('123456789')),
+    //   Crc16AugCcitt().convert(utf8.encode('123456789')),
+    //   Crc16Autosar().convert(utf8.encode('123456789')),
+    //   Crc16B().convert(utf8.encode('123456789')),
+    //   Crc16Buypass().convert(utf8.encode('123456789')),
+    //   Crc16Ccitt().convert(utf8.encode('123456789')),
+    //   Crc16CcittFalse().convert(utf8.encode('123456789')),
+    //   Crc16CcittTrue().convert(utf8.encode('123456789')),
+    //   Crc16Cdma2000().convert(utf8.encode('123456789')),
+    //   Crc16CcittTrue().convert(utf8.encode('123456789')),
+    //   Crc16CcittTrue().convert(utf8.encode('123456789'))
+    // ];
+    // print('crc: $crc, ${ccc }');
+
       ByteData bd = ByteData(4);
       bd.setUint32(0 ,data.length ,Endian.little);
       List<int> dd = bd.buffer.asUint8List();
 
 
-      SdoBlkDownStartReqMsg bdsq = SdoBlkDownStartReqMsg(data.length);
+      SdoBlkDownStartReqMsg bdsq = SdoBlkDownStartReqMsg(data.length, mIndex, sIndex);
       List<int>? rData = await sdoIo.call(nodeId, bdsq.buffer);
       if (rData == null) return false;
       SdoBlkDownStartResMsg? bdss = Catcher.call<SdoBlkDownStartResMsg>(()=>SdoBlkDownStartResMsg(Uint8List.fromList(rData!)));
@@ -151,39 +173,59 @@ class SdoPtl{
 
       int blksize = bdss.blksize;
       int index = 0;
+      int padding = 0;
 
-      while( index + 7 < data.length ){
+      while( index  < data.length ){
 
-        print('blk data: $index');
+        int c = index + 7 >= data.length ? 1:0 ;
 
-        int c = index + 14 >= data.length ? 1:0 ;
+        int seqno = (index~/7 )  % blksize + 1 ;
 
-        int seqno = (index~/7)  % blksize ;
+        List<int> sData = data.sublist(index,data.length-index < 7? data.length: index + 7);
 
-        List<int> sData = data.sublist(index, index + 7);
+        if (sData.length< 7) {
+          padding = 7- sData.length;
+
+          List<int> l = Uint8List(7);
+          l.setAll(0, sData);
+          sData = l;
+        }
 
         SdoBlkDownIngReqMsg bdiq = SdoBlkDownIngReqMsg( c,  seqno , sData);
 
-        rData = await sdoIo.call(nodeId, bdiq.buffer);
-        if (rData == null) return false;
+        if (seqno == blksize ||  c == 1){
+          rData = await sdoIo.call(nodeId, bdiq.buffer);
+          if (rData == null) return false;
 
-        SdoBlkDownIngResMsg? bdis = Catcher.call<SdoBlkDownIngResMsg>(()=>SdoBlkDownIngResMsg(Uint8List.fromList(rData!)));
-        if (bdis == null) return false;
+          SdoBlkDownIngResMsg? bdis = Catcher.call<SdoBlkDownIngResMsg>(()=>SdoBlkDownIngResMsg(Uint8List.fromList(rData!)));
+          if (bdis == null) return false;
 
-        print('ack: ${bdis.ackseq}');
+          print('seqno,ack:$seqno,  ${bdis.ackseq}');
+
+          if (bdis.ackseq != seqno){
+            throw Exception('send failed,ack failed.');
+            continue;
+            // print('send failed,ack failed.');
+          }
+        }else{
+          await sdoIo.callWithoutRes(nodeId, bdiq.buffer);
+        }
 
         index += 7;
 
       }
 
-      SdoBlkDownEndReqMsg bddq = SdoBlkDownEndReqMsg(7 - (data.length - index) ,0);
+      print('padding: $padding');
+
+      SdoBlkDownEndReqMsg bddq = SdoBlkDownEndReqMsg(padding ,crc.toBigInt().toInt());
       rData = await sdoIo.call(nodeId, bddq.buffer);
       if (rData == null) return false;
       SdoBlkDownEndResMsg? bdes = Catcher.call<SdoBlkDownEndResMsg>(()=>SdoBlkDownEndResMsg(Uint8List.fromList(rData!)));
 
       print('blk end: ${bdes?.ss}');
 
-      return true;
+
+      return bdes?.ss == 1;
 
   }
 }

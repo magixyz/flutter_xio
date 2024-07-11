@@ -1,11 +1,14 @@
 
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:flutter_xio/flutter_xio.dart';
 import 'package:provider/provider.dart';
+
+import 'bootloader_ptl.dart';
 
 class DeviceWidget extends StatefulWidget {
 
@@ -150,9 +153,42 @@ class _DeviceWidgetState extends State<DeviceWidget> {
 
               print('write: $data');
             },),
-            ListTile(title: Text('can ble upload'),onTap: ()async{
+            ListTile(title: Text('enter bootloader'),onTap: ()async{
 
-              List<int>? ret = await canBleIo?.upload(6, 0x60c0, 0x01);
+
+              bool? ret1 = await canBleIo?.download(6,0x6210,1,BlecanPtl.register2byte((BootloaderPtl.iapEnterBootloader())));
+
+
+              print('>>>>>>>> enter bootloader: ${ ret1 }');
+
+
+            },),
+            ListTile(title: Text('enter application'),onTap: ()async{
+
+              bool? ret1 = await canBleIo?.download(6,0x6210,1,BlecanPtl.register2byte((BootloaderPtl.iapExitBootloader(Uint8List.fromList([0,96,0,8])))));
+
+
+              print('>>>>>>>> exit bootloader: ${ ret1 }');
+
+            },),
+            ListTile(title: Text('bootload jump'),onTap: ()async{
+
+              bool? ret = await canBleIo?.blkDown(6, 0x6310, 0x00, HexUtil.hex2byte('aa55'));
+
+              print('>>>>>>>> download: ${ ret }');
+
+            },),
+            ListTile(title: Text('upload bootloader info'),onTap: ()async{
+
+              List<int>? ret = await canBleIo?.upload(6, 0x6301, 0x01);
+
+
+              print('>>>>>>>> upload: ${ HexUtil.byte2hex(ret??[])}');
+
+            },),
+            ListTile(title: Text('upload device info'),onTap: ()async{
+
+              List<int>? ret = await canBleIo?.upload(6, 0x6000, 0x01);
 
 
               print('>>>>>>>> upload: ${ HexUtil.byte2hex(ret??[])}');
@@ -168,7 +204,8 @@ class _DeviceWidgetState extends State<DeviceWidget> {
             },),
             ListTile(title: Text('can ble blk down'),onTap: ()async{
 
-              bool? ret = await canBleIo?.blkDown(6, 0x60c0, 0x01, HexUtil.hex2byte('b80b2c01d007e803d007e803b80be02ee8030000b80b2c01d007e803d007e803b80be02ee8030000b80b2c01d007e803d007e803b80be02ee8030000b80b2c01d007e803d007e803b80be02ee8030000b80b2c01d007e803d007e803b80be02ee8030000dc052c01e8032003e803e803b80be02ee8030000'));
+
+              bool? ret = await canBleIo?.blkDown(6, 0x6310, 0x00, HexUtil.hex2byte('aa55'));
 
 
               print('>>>>>>>> download: ${ ret }');

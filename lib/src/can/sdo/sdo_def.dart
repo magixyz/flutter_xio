@@ -431,14 +431,14 @@ mixin class SdoBlkSize{
 
     if (vs.length != 4) throw Exception('size list length should be 4, but is: $vs');
 
-    size = vs[0] + (vs[1] << 0x10) + (vs[2] << 0x20) + (vs[3] << 0x30) ;
+    size = vs[0] + (vs[1] << 0x08) + (vs[2] << 0x10) + (vs[3] << 0x18) ;
   }
 
   List<int> dumpSize(){
 
     if (size < 0 || size > 0xffffffff ) throw Exception('size should between 0-0xffffffff, but is: $size');
 
-    return [size & 0xff, size >> 0x10 & 0xff, size >> 0x20 & 0xff, size >> 0x30 & 0xff ];
+    return [size & 0xff, size >> 0x08 & 0xff, size >> 0x10 & 0xff, size >> 0x18 & 0xff ];
   }
 }
 
@@ -451,12 +451,18 @@ class SdoBlkDownStartReqMsg extends SdoReqMsgV1 with SdoIndex,SdoBlkSize{
   late int s ;
   late int cs = 0;
 
-  late int size;
 
-  SdoBlkDownStartReqMsg( this.size,{this.cc=1,this.s=1 , super.ccs = CCS}){
+  SdoBlkDownStartReqMsg( int size,int mIndex,int sIndex, {this.cc=1,this.s=1 , super.ccs = CCS}){
+    this.mIndex = mIndex;
+    this.sIndex = sIndex;
+    this.size = size;
+
     dumpHead();
     buffer.setRange(1, 4, dumpIndex());
-    buffer.setRange(4,8, dumpSize());
+
+    if (s == 1) buffer.setRange(4,8,  dumpSize() );
+
+    print('dump size: ${dumpSize()}, $buffer ,  $size');
   }
 
 
@@ -468,7 +474,7 @@ class SdoBlkDownStartReqMsg extends SdoReqMsgV1 with SdoIndex,SdoBlkSize{
 }
 
 
-class SdoBlkDownStartResMsg extends SdoResMsgV1 with SdoIndex,SdoBlkSize{
+class SdoBlkDownStartResMsg extends SdoResMsgV1 with SdoIndex{
 
   static const int SCS = 5;
 
@@ -481,7 +487,7 @@ class SdoBlkDownStartResMsg extends SdoResMsgV1 with SdoIndex,SdoBlkSize{
   SdoBlkDownStartResMsg(super.buffer):super(scs: SCS){
     loadHead();
     loadIndex(buffer.sublist(1,4));
-    loadSize(buffer.sublist(4,8));
+    blksize = buffer[4];
   }
 
   @override
@@ -549,6 +555,8 @@ class SdoBlkDownEndReqMsg extends SdoReqMsgV1 {
   SdoBlkDownEndReqMsg(this.n,this.crc,{super.ccs = CCS}){
     dumpHead();
     // buffer.setRange(1, 3, [crc]);
+    buffer[2] = crc >> 0x08;
+    buffer[1] = crc & 0xff;
   }
 
 

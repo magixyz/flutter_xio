@@ -1,5 +1,9 @@
 library flutter_xio;
 
+import 'dart:convert';
+
+import 'package:crclib/catalog.dart';
+
 export 'src/enum/byte_loc.dart';
 export 'src/enum/register_type.dart';
 
@@ -29,3 +33,4 @@ class Calculator {
   /// Returns [value] plus 1.
   int addOne(int value) => value + 1;
 }
+
