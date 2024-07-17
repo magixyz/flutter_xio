@@ -66,7 +66,7 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
     }
 
     this.deviceId = deviceId;
-    _connection = _ble.connectToDevice(id: deviceId, connectionTimeout: timeout?? Duration(seconds: 5)).listen(
+    _connection = _ble.connectToDevice(id: deviceId, connectionTimeout: timeout?? Duration(seconds: 10)).listen(
       (update) {
         print(
             'ConnectionState for device $deviceId : ${update.connectionState}');
@@ -78,7 +78,7 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
 
     print('mark: connect 2');
 
-    var mturet = await _ble.requestMtu(deviceId: deviceId, mtu: 256);
+    var mturet = await _ble.requestMtu(deviceId: deviceId, mtu: 512);
 
     print('mark: connect 3: $mturet');
 

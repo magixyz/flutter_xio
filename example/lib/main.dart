@@ -1,4 +1,5 @@
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:example/device_ble_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_xio/flutter_xio.dart';
 
@@ -145,7 +146,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     subtitle: Text(e.id),
                     onTap: ()async{
                       await scanner.stopScan();
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => DeviceWidget(e)));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => DeviceBleWidget(e)));
                     },
                   )).toList(),
         ),
