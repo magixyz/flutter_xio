@@ -73,7 +73,7 @@ class ModbusBleIoV2 {
         return null;
       }
 
-      if (rData[0] != data[0]) return null;
+      if (rData[1] != data[1]) return null;
 
       ByteData tmp = ByteData(data.length);
       for (int i = 0; i < data.length; i++)
@@ -84,6 +84,7 @@ class ModbusBleIoV2 {
       } else if ([0x10].contains(rData[1])) {
         if (rData.length < 8) return null;
       }
+
 
       return rData;
     });

@@ -72,7 +72,11 @@ abstract class RegisterField {
   read(Uint16List data){
     if (size != data.length) throw Exception('Data length[${data.length}] not match with size[$size]');
 
+    print('uint16list: ${data}');
+
     ByteData tmp = _Uint16List2ByteData(data);
+
+    print('ByteData: ${tmp.buffer.asInt8List()}');
 
     _read(tmp);
   }

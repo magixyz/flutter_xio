@@ -51,7 +51,7 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
 
   }
 
-  Future<bool> connect(String deviceId,{Duration? timeout}) async {
+  Future<bool> connect(String deviceId,{Duration? timeout=const Duration(seconds: 2)}) async {
 
     print('mark: ble connect start');
 
@@ -66,6 +66,9 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
     }
 
     this.deviceId = deviceId;
+
+    print('connect timeout: $timeout');
+
     _connection = _ble.connectToDevice(id: deviceId, connectionTimeout: timeout?? Duration(seconds: 10)).listen(
       (update) {
         print(
@@ -99,14 +102,13 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
 
   Future<bool> disconnect() async {
 
-    if (deviceConnectionState != null && deviceConnectionState != DeviceConnectionState.connected ) return false;
-
-    print('mark: disconnect 1');
+    if (deviceConnectionState == null || deviceConnectionState != DeviceConnectionState.connected ) return false;
 
     try {
       _logMessage('disconnecting to device: $deviceId');
       await _connection?.cancel();
       _connection = null;
+
     } on Exception catch (e, _) {
       _logMessage("Error disconnecting from a device: $e");
     } finally {
@@ -151,12 +153,15 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
     print(value);
 
     for (var e in value) {
-      print('service: ${e.id.toString()}');
+      print('service1: ${e.id.toString()}');
 
       if (e.id == serviceUuid) {
         List<Characteristic?> cs = [];
 
         for (Uuid cUuid in characteristicUuids) {
+
+          print('hit characteristic: $cUuid' );
+
           Characteristic? target;
 
           for (var c in e.characteristics) {

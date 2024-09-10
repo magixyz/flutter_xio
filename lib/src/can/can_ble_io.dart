@@ -28,11 +28,11 @@ class CanBleIo extends SdoIo{
 
   Future<List<int>?> upload(int nodeId, int mIndex,int sIndex, {int retry = 3, int timeout = 1000}) async {
 
-    print('upload, m index: $mIndex , s index: $sIndex');
+    // print('upload, m index: $mIndex , s index: $sIndex');
 
     var ret = await sdoPtl.upload(nodeId, mIndex, sIndex);
 
-    print('upload, ret: $ret');
+    // print('upload, ret: $ret');
 
 
     return ret;
@@ -40,11 +40,11 @@ class CanBleIo extends SdoIo{
 
   Future<bool> download(int nodeId, int mIndex,int sIndex, List<int> data, {int retry = 3, int timeout = 1000}) async {
 
-    print('download, m index: $mIndex , s index: $sIndex');
+    // print('download, m index: $mIndex , s index: $sIndex');
 
     var ret = await sdoPtl.download(nodeId, mIndex, sIndex,data);
 
-    print('download, ret: $ret');
+    // print('download, ret: $ret');
 
     return ret;
 
@@ -52,11 +52,11 @@ class CanBleIo extends SdoIo{
 
   Future<bool> blkDown(int nodeId, int mIndex,int sIndex, List<int> data, {int retry = 3, int timeout = 1000}) async {
 
-    print('blk down, m index: $mIndex , s index: $sIndex');
+    // print('blk down, m index: $mIndex , s index: $sIndex');
 
     var ret = await sdoPtl.blkDown(nodeId, mIndex, sIndex,data);
 
-    print('blk down, ret: $ret');
+    // print('blk down, ret: $ret');
 
     return ret;
 
@@ -72,7 +72,7 @@ class CanBleIo extends SdoIo{
 
     // print( '${DateTime.now()}: call start , delay test');
 
-    print('send data: ${utf8.decode(sData)}');
+    // print('send data: ${utf8.decode(sData)}');
 
 
     List<int>? rData = await bleIo.call(sData, (List<int> nData,List<int> rData){
@@ -85,21 +85,21 @@ class CanBleIo extends SdoIo{
       rData.addAll(nData);
 
 
-      print('can ble io rdata: $rData');
+      // print('can ble io rdata: $rData');
 
       if (rData.contains(  '\r'.codeUnitAt(0))){
-        print('can ble io 111');
+        // print('can ble io 111');
 
         return rData;
       }else{
 
-        print('can ble io 222');
+        // print('can ble io 222');
 
         return null;
       }
     },timeout: 10000);
 
-    print( '${DateTime.now()}: call end , delay test');
+    // print( '${DateTime.now()}: call end , delay test');
 
     if (rData == null) return null;
 
@@ -117,7 +117,7 @@ class CanBleIo extends SdoIo{
 
     // print( '${DateTime.now()}: call start , delay test');
 
-    print('send data: ${utf8.decode(sData)}');
+    // print('send data: ${utf8.decode(sData)}');
 
 
     bool ret = await bleIo.callWithoutRes(sData);

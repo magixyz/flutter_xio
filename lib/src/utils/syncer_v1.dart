@@ -13,7 +13,7 @@ class SyncerV1<T>{
 
   SyncerV1(this.sender,this.recver);
 
-  Future<T?> retry(Function func, {int retry=3,int timeout=1000}) async{
+  Future<T?> retry({int retry=3,int timeout=1000}) async{
 
     _breaked = false;
 
@@ -40,7 +40,9 @@ class SyncerV1<T>{
 
   Future<T?> call({int timeout=1000}) async{
 
-    print('${DateTime.now()}, sync_v1 call');
+    _completer = Completer<T?>();
+
+    // print('${DateTime.now()}, sync_v1 call');
     try{
       await sender();
     }catch(e) {
@@ -72,10 +74,14 @@ class SyncerV1<T>{
     try{
       var ret = await recver(t);
       if (ret != null){
-        _completer.complete(ret);
+        if (!_completer.isCompleted) {
+          _completer.complete(ret);
+        }
       }
     }catch(e){
-      _completer.complete(null);
+      if (!_completer.isCompleted) {
+        _completer.complete(null);
+      }
     }
   }
 

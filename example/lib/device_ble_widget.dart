@@ -131,7 +131,7 @@ class _DeviceBleWidgetState extends State<DeviceBleWidget> {
 
             },),
             ListTile(title: Text('can ble blk down'),onTap: ()async{
-              DefaultAssetBundle.of(context).load('assets/blecan.bin').then((v)async {
+              DefaultAssetBundle.of(context).load('assets/dfu.bin').then((v)async {
 
                 var bytes = v.buffer.asInt8List();
 

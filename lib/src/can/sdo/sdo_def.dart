@@ -33,8 +33,8 @@ abstract class SdoMsg{
 
   SdoMsg.load(List<int> vs){
     
-    print('sdo data: ${HexUtil.byte2hex(vs)}');
-    print('sdo head: ${vs[0].toRadixString(2)}');
+    // print('sdo data: ${HexUtil.byte2hex(vs)}');
+    // print('sdo head: ${vs[0].toRadixString(2)}');
 
     cs = (vs[0] >> 5);
   }
@@ -462,7 +462,7 @@ class SdoBlkDownStartReqMsg extends SdoReqMsgV1 with SdoIndex,SdoBlkSize{
 
     if (s == 1) buffer.setRange(4,8,  dumpSize() );
 
-    print('dump size: ${dumpSize()}, $buffer ,  $size');
+    // print('dump size: ${dumpSize()}, $buffer ,  $size');
   }
 
 

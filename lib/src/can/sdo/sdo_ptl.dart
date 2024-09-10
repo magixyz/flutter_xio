@@ -18,18 +18,18 @@ class SdoPtl{
 
   Future<List<int>?> upload(int nodeId, int mIndex,int sIndex, {int retry = 3, int timeout = 1000}) async {
 
-    print( '${DateTime.now()}: upload start , delay test');
+    // print( '${DateTime.now()}: upload start , delay test');
 
     SdoUpReqDirectMsg uqd = SdoUpReqDirectMsg(mIndex,sIndex,[]);
     List<int>? rData = await sdoIo.call(nodeId, uqd.dump);
     if (rData == null) return null;
 
-    print('rdata: $rData , ');
+    // print('rdata: $rData , ');
 
     SdoUpRespDirectMsg? urd = Catcher.call<SdoUpRespDirectMsg>(()=>SdoUpRespDirectMsg.load(rData));
 
-    print('urd: $urd');
-    print('urd: ${urd?.data} ');
+    // print('urd: $urd');
+    // print('urd: ${urd?.data} ');
 
     if (urd == null ) return null;
 
@@ -59,12 +59,12 @@ class SdoPtl{
 
       rSegData.addAll(uss.data);
 
-      print('uss c: ${uss.c}');
+      // print('uss c: ${uss.c}');
 
       if (uss.c == 1){
 
 
-        print( '${DateTime.now()}: upload end , delay test');
+        // print( '${DateTime.now()}: upload end , delay test');
 
         return rSegData;
       }
@@ -115,7 +115,7 @@ class SdoPtl{
 
         List<int> sData = data.sublist(sSegDataIndex, sSegDataIndex + len);
 
-        print('seg send index: $sSegDataIndex , data: ${sData} , data: ${data} , len:$len');
+        // print('seg send index: $sSegDataIndex , data: ${sData} , data: ${data} , len:$len');
         SdoDownReqSegMsg dqs = SdoDownReqSegMsg( t, 7 - len , c, sData);
 
         List<int>? rData = await sdoIo.call(nodeId, dqs.dump);
@@ -140,7 +140,7 @@ class SdoPtl{
     var crc = Crc16Acorn().convert(data);
 
 
-    print('blk down data: $data');
+    // print('blk down data: $data');
     // var ccc = [
     //   Crc16A().convert(utf8.encode('123456789')),
     //   Crc16Acorn().convert(utf8.encode('123456789')),
@@ -169,7 +169,7 @@ class SdoPtl{
       SdoBlkDownStartResMsg? bdss = Catcher.call<SdoBlkDownStartResMsg>(()=>SdoBlkDownStartResMsg(Uint8List.fromList(rData!)));
       if (bdss == null ) return false;
 
-      print('blk start: ${bdss.blksize}');
+      // print('blk start: ${bdss.blksize}');
 
       int blksize = bdss.blksize;
       int index = 0;
@@ -200,7 +200,7 @@ class SdoPtl{
           SdoBlkDownIngResMsg? bdis = Catcher.call<SdoBlkDownIngResMsg>(()=>SdoBlkDownIngResMsg(Uint8List.fromList(rData!)));
           if (bdis == null) return false;
 
-          print('seqno,ack:$seqno,  ${bdis.ackseq}');
+          // print('seqno,ack:$seqno,  ${bdis.ackseq}');
 
           if (bdis.ackseq != seqno){
             throw Exception('send failed,ack failed.');
@@ -215,14 +215,14 @@ class SdoPtl{
 
       }
 
-      print('padding: $padding');
+      // print('padding: $padding');
 
       SdoBlkDownEndReqMsg bddq = SdoBlkDownEndReqMsg(padding ,crc.toBigInt().toInt());
       rData = await sdoIo.call(nodeId, bddq.buffer);
       if (rData == null) return false;
       SdoBlkDownEndResMsg? bdes = Catcher.call<SdoBlkDownEndResMsg>(()=>SdoBlkDownEndResMsg(Uint8List.fromList(rData!)));
 
-      print('blk end: ${bdes?.ss}');
+      // print('blk end: ${bdes?.ss}');
 
 
       return bdes?.ss == 1;
