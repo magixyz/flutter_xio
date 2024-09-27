@@ -1,6 +1,6 @@
 name: flutter_xio
 description: "A flutter implementation of the hardware io,include modbus protocol etc."
-version: 0.0.4
+version: 0.1.2
 homepage: "https://github.com/magixyz/flutter_xio"
 
 environment:
@@ -24,6 +24,8 @@ dependencies:
   json_annotation: ^4.4.0
 
   crclib: ^3.0.0
+
+  synchronized: 3.1.0+1
 
 dev_dependencies:
   flutter_test:

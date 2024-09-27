@@ -102,14 +102,25 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
 
   Future<bool> disconnect() async {
 
+
+    print('disconnect step 0');
+
     if (deviceConnectionState == null || deviceConnectionState != DeviceConnectionState.connected ) return false;
+
+    print('disconnect step 1');
 
     try {
       _logMessage('disconnecting to device: $deviceId');
       await _connection?.cancel();
       _connection = null;
 
+
+      print('disconnect step 2: ${deviceConnectionState}');
+
     } on Exception catch (e, _) {
+
+
+      print('disconnect step 3');
       _logMessage("Error disconnecting from a device: $e");
     } finally {
       // Since [_connection] subscription is terminated, the "disconnected" state cannot be received and propagated
@@ -121,13 +132,26 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
       //   ),
       // );
 
+
+      print('disconnect step 4: ${deviceConnectionState}');
+
     }
 
 
+    print('disconnect step 5: ${deviceConnectionState}');
+
     while(! [DeviceConnectionState.connected,DeviceConnectionState.disconnected].contains( deviceConnectionState ) ){
+
+      print('disconnect step 6: ${deviceConnectionState}');
       _completer = Completer<DeviceConnectionState>();
       await _completer!.future;
+
+
+      print('disconnect step 7: ${deviceConnectionState}');
     };
+
+
+    print('disconnect step 8: ${deviceConnectionState}');
 
     return deviceConnectionState == DeviceConnectionState.disconnected;
 

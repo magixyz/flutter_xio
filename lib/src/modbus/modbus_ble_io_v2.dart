@@ -62,8 +62,15 @@ class ModbusBleIoV2 {
     List<int> sData = data;
 
     List<int>? rData = await bleIo.call(
-        sData, (List<int> nData, List<int> rData) {
+        sData, (List<int>? nData, List<int> rData) {
+      if (nData == null){
+        rData.clear();
+        return null;
+      }
+
       rData.addAll(nData);
+
+      print('rData: $rData');
 
       if (rData.length < 3) return null;
 

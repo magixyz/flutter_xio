@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:flutter_xio/flutter_xio.dart';
 import 'package:flutter_xio/src/utils/syncer_v1.dart';
+import 'package:synchronized/synchronized.dart';
 
 import '../utils/syncer.dart';
 import 'ble_device_connector.dart';
@@ -14,6 +15,8 @@ class BleIo{
   BleDeviceConnector connector;
 
   List<Function> listens = [];
+
+  Lock lock = new Lock();
 
   BleIo(this.notifier,this.writer,this.connector){
 
@@ -42,32 +45,39 @@ class BleIo{
 
   }
 
-  Future<List<int>?> call(List<int> data,Function(List<int> nData,List<int> rData) listen, {int retry = 3, int timeout = 3000}) async {
+  Future<List<int>?> call(List<int> data,Function(List<int>? nData,List<int> rData) listen, {int retry = 3, int timeout = 3000}) async {
 
-    List<int> rData = [];
+    return await lock.synchronized(() async {
 
-    var syncer = SyncerV1<List<int>?>(()async{
+      List<int> rData = [];
 
-      if ( connector.deviceConnectionState != DeviceConnectionState.connected) return null;
+      var syncer = SyncerV1<List<int>?>(()async{
 
-      print('write data: $data');
+        if ( connector.deviceConnectionState != DeviceConnectionState.connected) return null;
 
-      await writer.write(data,withResponse: false);
+        print('write data: $data');
 
-    },(List<int> nData)async{
-      return await listen(nData,rData);
+        await writer.write(data,withResponse: false);
+
+      },(List<int>? nData)async{
+        return await listen(nData,rData);
+      });
+
+
+      print('will retry 1');
+
+      listens.add(syncer.notify);
+
+      var ret = await syncer.retry(timeout: timeout);
+
+      listens.remove(syncer.notify);
+
+      print('will retry 2');
+
+
+      return ret;
+
     });
-
-    listens.add(syncer.notify);
-
-
-    print('will retry 1');
-    var ret = await syncer.retry(timeout: timeout);
-    print('will retry 2');
-
-    listens.remove(syncer.notify);
-
-    return ret;
 
   }
 

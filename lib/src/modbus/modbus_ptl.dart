@@ -57,24 +57,6 @@ class ModbusPtl{
 
   }
 
-  static Tuple3<int,int,Uint16List>? r_modbus_backup(Uint8List msg){
-
-    var todata = msg.sublist(2,msg.length-2);
-    var tmpdata = msg.sublist(0);
-
-
-    var crcH = msg[msg.length-2];
-    var crcL = msg[msg.length-1];
-
-    int crc = crc16(tmpdata);
-
-    if (0xff & crc>>8 == crcH && 0xff & crc == crcL ){
-      return Tuple3(msg[0],msg[1], byte2register(todata));
-    }else{
-      print('crc failed.');
-      return null;
-    }
-  }
 
   static Tuple4<int,int,int,int>? r_modbus_write(Uint8List msg){
 
@@ -103,10 +85,10 @@ class ModbusPtl{
 
     int crc = crc16(tmpdata);
 
-    if (0xff & crc>>8 == crcH && 0xff & crc == crcL ){
+    if ((0xff & (crc>>8)) == crcH && (0xff & crc) == crcL ){
       return Tuple3(msg[0],msg[1], byte2register(todata));
     }else{
-      print('crc failed.');
+      print('crc failed： $crc');
       return null;
     }
  }

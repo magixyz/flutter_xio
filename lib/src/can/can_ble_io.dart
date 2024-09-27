@@ -75,7 +75,12 @@ class CanBleIo extends SdoIo{
     // print('send data: ${utf8.decode(sData)}');
 
 
-    List<int>? rData = await bleIo.call(sData, (List<int> nData,List<int> rData){
+    List<int>? rData = await bleIo.call(sData, (List<int>? nData,List<int> rData){
+
+      if (nData == null){
+        rData.clear();
+        return null;
+      }
 
       // print('can ble io ndata: $nData');
 
