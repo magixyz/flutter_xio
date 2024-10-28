@@ -20,23 +20,12 @@ class BleIo{
 
   BleIo(this.notifier,this.writer,this.connector){
 
+    print('notifier: $notifier');
+    print('writer: $writer');
+
      this.notifier.subscribe().listen((event) {
 
        print('notify: $event');
-
-       if (event[0] == 116) {
-         if (!utf8.decode(event).startsWith(RegExp(r't[1234]868'))) {
-           // print('notify: ' + utf8.decode(event));
-         }
-       }else{
-         // print('notify: ' + HexUtil.byte2hex(event));
-       }
-
-       // if (utf8.decode(event).startsWith(RegExp(r't[1234]868'))){
-       //   return;
-       // }
-       //
-       // print('flitered notify: ' + utf8.decode(event));
 
        for (Function listen in listens){
          listen(event);
@@ -46,6 +35,8 @@ class BleIo{
   }
 
   Future<List<int>?> call(List<int> data,Function(List<int>? nData,List<int> rData) listen, {int retry = 3, int timeout = 3000}) async {
+
+    print('call === : $data');
 
     return await lock.synchronized(() async {
 
@@ -63,17 +54,11 @@ class BleIo{
         return await listen(nData,rData);
       });
 
-
-      print('will retry 1');
-
       listens.add(syncer.notify);
 
       var ret = await syncer.retry(timeout: timeout);
 
       listens.remove(syncer.notify);
-
-      print('will retry 2');
-
 
       return ret;
 

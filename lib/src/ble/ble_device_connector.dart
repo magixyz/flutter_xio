@@ -93,6 +93,11 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
 
     }
 
+    if (deviceConnectionState == DeviceConnectionState.connected){
+      print('request high performance ...');
+      await _ble.requestConnectionPriority(deviceId: deviceId, priority: ConnectionPriority.highPerformance);
+      print('response high performance ...');
+    }
 
     print('mark: ble connect end: $deviceConnectionState');
 

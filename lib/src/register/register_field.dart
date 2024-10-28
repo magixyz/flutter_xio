@@ -1,12 +1,13 @@
 
 
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import '../enum/byte_loc.dart';
 
 enum FieldType{
-  float,short,ushort,int,uint,ulong,byte,bit,bits,string,hex
+  float,short,ushort,int,uint,ulong,byte,bit,bits,rbits,string,rstring,hex
 }
 
 abstract class RegisterField {
@@ -21,31 +22,39 @@ abstract class RegisterField {
 
     String? tag = json['tag'];
     List? selection = json['selection'];
+    double? ratio = json['ratio'];
+    String? unit = json['unit'];
+
 
     switch(type){
       case FieldType.float:
-        return FloatField(key, type,name,offset,size,tag: tag,selection: selection);
+        return FloatField(key, type,name,offset,size,tag: tag,selection: selection,ratio: ratio,unit: unit);
       case FieldType.short:
-        return ShortField(key, type,name,offset,size,tag: tag,selection: selection);
+        return ShortField(key, type,name,offset,size,tag: tag,selection: selection,ratio: ratio,unit: unit);
       case FieldType.ushort:
-        return UshortField(key, type,name,offset,size,tag: tag,selection: selection);
+        return UshortField(key, type,name,offset,size,tag: tag,selection: selection,ratio: ratio,unit: unit);
       case FieldType.int:
-        return IntField(key, type,name,offset,size,tag: tag,selection: selection);
+        return IntField(key, type,name,offset,size,tag: tag,selection: selection,ratio: ratio,unit: unit);
       case FieldType.uint:
-        return UintField(key, type,name,offset,size,tag: tag,selection: selection);
+        return UintField(key, type,name,offset,size,tag: tag,selection: selection,ratio: ratio,unit: unit);
       case FieldType.ulong:
-        return UlongField(key, type,name,offset,size,tag: tag,selection: selection);
+        return UlongField(key, type,name,offset,size,tag: tag,selection: selection,ratio: ratio,unit: unit);
       case FieldType.byte:
         ByteLoc bytePos = ByteLoc.values.byName(json['byte_pos']);
-        return ByteField(key, type,name,offset,size,bytePos,tag: tag,selection: selection);
+        return ByteField(key, type,name,offset,size,bytePos,tag: tag,selection: selection,ratio: ratio,unit: unit);
       case FieldType.bits:
         List<dynamic> bitsRange = json['bits_range'];
-        return BitsField(key, type,name,offset,size, bitsRange ,tag: tag,selection: selection);
+        return BitsField(key, type,name,offset,size, bitsRange ,tag: tag,selection: selection,ratio: ratio,unit: unit);
+      case FieldType.rbits:
+        List<dynamic> bitsRange = json['bits_range'];
+        return ReverseBitsField(key, type,name,offset,size, bitsRange ,tag: tag,selection: selection,ratio: ratio,unit: unit);
       case FieldType.bit:
         int bitPos = json['bit_pos'];
-        return BitField(key, type,name,offset,size, bitPos,tag: tag,selection: selection);
+        return BitField(key, type,name,offset,size, bitPos,tag: tag,selection: selection,ratio: ratio,unit: unit);
       case FieldType.string:
         return StringField(key, type,name,offset,size,tag: tag,selection: selection);
+      case FieldType.rstring:
+        return ReverseStringField(key, type,name,offset,size,tag: tag,selection: selection);
       case FieldType.hex:
         return HexField(key, type,name,offset,size,tag: tag,selection: selection);
       default:
@@ -63,11 +72,14 @@ abstract class RegisterField {
 
   String? tag;
   List? selection;
+  double? ratio;
+  String? unit;
 
   dynamic readValue;
   dynamic writeValue;
 
-  RegisterField(this.key, this.type, this.name, this.offset,this.size,{this.tag, this.selection});
+
+  RegisterField(this.key, this.type, this.name, this.offset,this.size,{this.tag, this.selection,this.ratio,this.unit});
 
   read(Uint16List data){
     if (size != data.length) throw Exception('Data length[${data.length}] not match with size[$size]');
@@ -92,6 +104,15 @@ abstract class RegisterField {
     _ByteData2Uint16List(data,tmp);
   }
 
+  dynamic get value{
+    if (ratio == null) return readValue;
+    else {
+      return (ratio!*readValue).toStringAsFixed( (log(1/(ratio??1))/ln10).round());
+    }
+  }
+
+
+
   _write(ByteData tmp);
 
   _Uint16List2ByteData(Uint16List data){
@@ -112,8 +133,8 @@ abstract class RegisterField {
 class FloatField extends RegisterField{
 
   FloatField(String key, FieldType type, String? name, int addr,int size,
-      {String? tag, List? selection})
-      :super(key,type,name,addr,size){
+      {String? tag, List? selection,double? ratio,String? unit})
+      :super(key,type,name,addr,size,ratio:ratio,unit: unit){
     if (2 != size) throw Exception("The float type's size should be 2 in the json.");
   }
 
@@ -131,8 +152,8 @@ class FloatField extends RegisterField{
 
 class ShortField extends RegisterField{
   ShortField(String key, FieldType type, String? name, int addr,int size,
-      {String? tag, List? selection})
-      :super(key,type,name,addr,size){
+      {String? tag, List? selection,double? ratio,String? unit})
+      :super(key,type,name,addr,size,ratio: ratio,unit: unit){
     if (1 != size) throw Exception("The short type's size should be 1 in the json.");
   }
 
@@ -150,8 +171,8 @@ class ShortField extends RegisterField{
 
 class UshortField extends RegisterField{
   UshortField(String key, FieldType type, String? name, int addr,int size,
-      {String? tag, List? selection})
-      :super(key,type,name,addr,size){
+      {String? tag, List? selection,double? ratio,String? unit})
+      :super(key,type,name,addr,size,ratio: ratio,unit: unit){
     if (1 != size) throw Exception("The short type's size should be 1 in the json.");
   }
 
@@ -169,8 +190,8 @@ class UshortField extends RegisterField{
 
 class IntField extends RegisterField{
   IntField(String key, FieldType type, String? name, int addr,int size,
-      {String? tag, List? selection})
-      :super(key,type,name,addr,size){
+      {String? tag, List? selection,double? ratio,String? unit})
+      :super(key,type,name,addr,size,ratio: ratio,unit: unit){
     if (2 != size) throw Exception("The int type's size should be 2 in the json.but is:$size");
   }
 
@@ -187,8 +208,8 @@ class IntField extends RegisterField{
 
 class UintField extends RegisterField{
   UintField(String key, FieldType type, String? name, int addr,int size,
-      {String? tag, List? selection})
-      :super(key,type,name,addr,size){
+      {String? tag, List? selection,double? ratio,String? unit})
+      :super(key,type,name,addr,size,ratio: ratio,unit: unit){
     if (2 != size) throw Exception("The uint type's size should be 2 in the json.");
   }
 
@@ -206,9 +227,9 @@ class UintField extends RegisterField{
 
 class UlongField extends RegisterField{
   UlongField(String key, FieldType type, String? name, int addr,int size,
-      {String? tag, List? selection})
-      :super(key,type,name,addr,size){
-    if (4 != size) throw Exception("The int type's size should be 4 in the json.");
+      {String? tag, List? selection,double? ratio,String? unit})
+      :super(key,type,name,addr,size,ratio: ratio,unit: unit){
+    if (4 != size) throw Exception("The long type's size should be 4 in the json.");
   }
 
   @override
@@ -229,8 +250,8 @@ class ByteField extends RegisterField{
   ByteLoc bytePos;
 
   ByteField(String key, FieldType type, String? name, int addr,int size,this.bytePos,
-      {String? tag, List? selection})
-      :super(key,type,name,addr,size){
+      {String? tag, List? selection,double? ratio,String? unit})
+      :super(key,type,name,addr,size,ratio: ratio,unit: unit){
     if (1 != size) throw Exception('Data length should match with size');
 
   }
@@ -267,13 +288,15 @@ class BitField extends RegisterField{
 
 
   BitField(String key, FieldType type, String? name, int addr,int size,this.bitPos,
-      {String? tag, List? selection})
-      :super(key,type,name,addr,size){
+      {String? tag, List? selection,double? ratio,String? unit})
+      :super(key,type,name,addr,size,selection: selection,tag: tag,ratio: ratio,unit: unit){
+
     mask = 1 << bitPos;
   }
 
   @override
   _read(ByteData tmp) {
+
     readValue = (tmp.getUint16(0) & mask) >> bitPos;
   }
 
@@ -298,8 +321,8 @@ class BitsField extends RegisterField{
   late int mask;
 
   BitsField(String key, FieldType type, String? name, int addr,int size,this.bitsRange,
-      {String? tag, List? selection})
-      :super(key,type,name,addr,size){
+      {String? tag, List? selection,double? ratio,String? unit})
+      :super(key,type,name,addr,size,selection: selection,ratio: ratio,unit: unit){
     mask = ((1 << (bitsRange[1]-bitsRange[0])) - 1) << bitsRange[0];
   }
 
@@ -320,6 +343,41 @@ class BitsField extends RegisterField{
 
 }
 
+
+class ReverseBitsField extends RegisterField{
+
+  List<dynamic> bitsRange;
+
+  late int mask;
+
+  ReverseBitsField(String key, FieldType type, String? name, int addr,int size,this.bitsRange,
+      {String? tag, List? selection,double? ratio,String? unit})
+      :super(key,type,name,addr,size,selection: selection,ratio: ratio,unit: unit){
+    mask = ((1 << (bitsRange[1]-bitsRange[0])) - 1) << bitsRange[0];
+  }
+
+  @override
+  _read(ByteData tmp) {
+
+    for (int i=0; i< tmp.lengthInBytes/2; i++) tmp.setUint16(i*2, tmp.getUint16(i*2,Endian.little));
+
+    readValue = (tmp.getUint16(0) & mask) >> bitsRange[0];
+  }
+
+  @override
+  _write(ByteData tmp) {
+    int v = tmp.getUint16(0);
+
+    v &= ~mask;
+    v |= (writeValue << bitsRange[0]) & mask;
+
+    tmp.setUint16(0, v);
+
+    for (int i=0; i< tmp.lengthInBytes/2; i++) tmp.setUint16(i*2, tmp.getUint16(i*2,Endian.little));
+  }
+
+}
+
 class StringField extends RegisterField{
   StringField(String key, FieldType type, String? name, int addr,int size,
       {String? tag, List? selection})
@@ -336,6 +394,35 @@ class StringField extends RegisterField{
   _write(ByteData tmp) {
     List<int> list = utf8.encode(writeValue);
     for (int i=0; i< list.length; i++) tmp.setUint8(i, list[i]);
+  }
+}
+
+class ReverseStringField extends RegisterField{
+  ReverseStringField(String key, FieldType type, String? name, int addr,int size,
+      {String? tag, List? selection})
+      :super(key,type,name,addr,size);
+
+  @override
+  _read(ByteData tmp) {
+    for (int i=0; i< tmp.lengthInBytes/2; i++) tmp.setUint16(i*2, tmp.getUint16(i*2,Endian.little));
+
+    // Uint16List list =  tmp.buffer.asUint16List();
+    //
+    // ByteData tmp2 = new ByteData(tmp.lengthInBytes);
+    //
+    // for (int i=0; i< list.length; i++) {
+    //   tmp2.setInt16(i*2, list[i] ,Endian.little);
+    // }
+
+    readValue = String.fromCharCodes(tmp.buffer.asInt8List()).replaceAll(String.fromCharCode(0) , '');
+  }
+
+  @override
+  _write(ByteData tmp) {
+    List<int> list = utf8.encode(writeValue);
+    for (int i=0; i< list.length; i++) tmp.setUint8(i, list[i]);
+
+    for (int i=0; i< tmp.lengthInBytes/2; i++) tmp.setUint16(i*2, tmp.getUint16(i*2,Endian.little));
   }
 }
 

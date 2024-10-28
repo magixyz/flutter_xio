@@ -15,8 +15,11 @@ class RegisterCluster {
 
 
     String? name = json['name'];
+    String? icon = json['icon'];
     int addr = json['addr'];
     int size = json['size'];
+    String? gatt = json['gatt'];
+    List<int>? readCommand = json['read_command']?.cast<int>();
 
     RegisterType type = RegisterType.values.byName(json['register']);
 
@@ -33,16 +36,20 @@ class RegisterCluster {
 
     String? tag = json['tag'];
 
-    return RegisterCluster(key, name, addr, size, type, fields,tag: tag,canArgs: canArgs);
+    return RegisterCluster(key, name, addr, size, type, fields,tag: tag,canArgs: canArgs,gatt: gatt,readCommand: readCommand,icon: icon);
   }
 
 
   String? name;
+  String? icon;
   String key;
 
   int addr;
   int size;
   RegisterType registerType ;
+
+  String? gatt;
+  List<int>? readCommand;
 
   CanArgs? canArgs;
 
@@ -53,10 +60,11 @@ class RegisterCluster {
 
   Map<String,RegisterField> fields;
 
-  RegisterCluster(this.key, this.name, this.addr,this.size ,this.registerType,this.fields,{this.tag,this.canArgs});
+  RegisterCluster(this.key, this.name, this.addr,this.size ,this.registerType,this.fields,
+      {this.tag,this.canArgs,this.gatt, this.readCommand ,this.icon});
 
 
-  read(Uint16List data){
+  read(Uint16List? data){
 
     if (data == null) {
       readData = null;

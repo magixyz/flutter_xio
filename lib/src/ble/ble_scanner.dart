@@ -42,7 +42,7 @@ class BleScanner implements ReactiveState<BleScannerState> {
       _pushState();
     }, onError: (Object e) => _logMessage('Device scan fails with error: $e'));
     _pushState();
-    print('start scan 2...');
+
     if (seconds != null) {
       timer = Timer(Duration(seconds: seconds),(){
         stopScan();
@@ -51,7 +51,6 @@ class BleScanner implements ReactiveState<BleScannerState> {
 
     }
 
-    print('start scan 3... $_subscription');
   }
 
   void _pushState() {
@@ -62,7 +61,6 @@ class BleScanner implements ReactiveState<BleScannerState> {
       ),
     );
 
-    print('start scan 4... ${_subscription!=null}');
   }
 
   Future<void> stopScan() async {

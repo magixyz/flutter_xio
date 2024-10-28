@@ -28,6 +28,9 @@ export 'src/ble/ble_io.dart';
 export 'src/can/can_ble_io.dart';
 export 'src/can/blecan_ptl.dart';
 
+export 'src/rpc/rpc_ptl.dart';
+export 'src/rpc/rpc_ble_io.dart';
+
 /// A Calculator.
 class Calculator {
   /// Returns [value] plus 1.
