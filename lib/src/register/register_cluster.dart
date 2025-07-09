@@ -1,6 +1,7 @@
 
 import 'dart:typed_data';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_xio/src/register/can_args.dart';
 
 import '../enum/register_type.dart';
@@ -9,7 +10,7 @@ import 'register_field.dart';
 
 
 
-class RegisterCluster {
+class RegisterCluster extends ChangeNotifier{
 
   static RegisterCluster instance(String key, Map<String,dynamic> json){
 
@@ -71,10 +72,12 @@ class RegisterCluster {
       return;
     }
 
-      for(RegisterField field in fields.values){
-        field.read(data.sublist(field.offset,field.offset + field.size));
-      }
-      readData = data;
+    for (RegisterField field in fields.values) {
+      field.read(data.sublist(field.offset, field.offset + field.size));
+    }
+    readData = data;
+
+    notifyListeners();
 
   }
 

@@ -16,7 +16,7 @@ class SdoPtl{
   SdoPtl(this.sdoIo);
 
 
-  Future<List<int>?> upload(int nodeId, int mIndex,int sIndex, {int retry = 3, int timeout = 1000}) async {
+  Future<List<int>?> upload(int nodeId, int mIndex,int sIndex, {int retry = 3, int timeout = 3000}) async {
 
     // print( '${DateTime.now()}: upload start , delay test');
 
@@ -25,6 +25,19 @@ class SdoPtl{
     if (rData == null) return null;
 
     // print('rdata: $rData , ');
+
+    if (rData[0]>>5 == 4){
+
+      print('sdo abort request.');
+
+      // SdoUpReqAbortMsg ura = SdoUpReqAbortMsg(mIndex,sIndex,[]);
+      // var r = await sdoIo.call(nodeId, ura.dump);
+      //
+      // print('sdo abort response: $r');
+
+      return null;
+    }
+
 
     SdoUpRespDirectMsg? urd = Catcher.call<SdoUpRespDirectMsg>(()=>SdoUpRespDirectMsg.load(rData));
 
@@ -51,6 +64,18 @@ class SdoPtl{
 
       List<int>? rData = await sdoIo.call(nodeId, uqs.dump);
       if (rData == null) return null;
+
+      if (rData[0]>>5 == 4){
+
+        print('sdo abort request 2.');
+
+        // SdoUpReqAbortMsg ura = SdoUpReqAbortMsg(mIndex,sIndex,[]);
+        // var r = await sdoIo.call(nodeId, ura.dump);
+        //
+        // print('sdo abort response: $r');
+
+        return null;
+      }
 
       SdoUpRespSegMsg? uss = Catcher.call<SdoUpRespSegMsg>(()=>SdoUpRespSegMsg.load(rData));
       if (uss == null) return null;
@@ -169,7 +194,7 @@ class SdoPtl{
       SdoBlkDownStartResMsg? bdss = Catcher.call<SdoBlkDownStartResMsg>(()=>SdoBlkDownStartResMsg(Uint8List.fromList(rData!)));
       if (bdss == null ) return false;
 
-      // print('blk start: ${bdss.blksize}');
+      print('blk start: ${bdss.blksize}');
 
       int blksize = bdss.blksize;
       int index = 0;
@@ -193,9 +218,24 @@ class SdoPtl{
 
         SdoBlkDownIngReqMsg bdiq = SdoBlkDownIngReqMsg( c,  seqno , sData);
 
+        print('blk down part end req: $seqno / $blksize / $c');
         if (seqno == blksize ||  c == 1){
+
+
           rData = await sdoIo.call(nodeId, bdiq.buffer);
           if (rData == null) return false;
+
+          if (rData[0]>>5 == 4){
+
+            print('sdo abort request 3.');
+
+            // SdoUpReqAbortMsg ura = SdoUpReqAbortMsg(mIndex,sIndex,[]);
+            // var r = await sdoIo.call(nodeId, ura.dump);
+            //
+            // print('sdo abort response: $r');
+
+            return false;
+          }
 
           SdoBlkDownIngResMsg? bdis = Catcher.call<SdoBlkDownIngResMsg>(()=>SdoBlkDownIngResMsg(Uint8List.fromList(rData!)));
           if (bdis == null) return false;
@@ -207,7 +247,11 @@ class SdoPtl{
             continue;
             // print('send failed,ack failed.');
           }
+
+
+          print('blk down part end res');
         }else{
+          print('blk down part req without res');
           await sdoIo.callWithoutRes(nodeId, bdiq.buffer);
         }
 

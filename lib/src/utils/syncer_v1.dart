@@ -17,6 +17,7 @@ class SyncerV1<T>{
 
     _breaked = false;
 
+    print('2 retry: $retry, timeout: $timeout');
 
     for (int i=0; i< retry; i++){
 

@@ -37,6 +37,8 @@ abstract class SdoMsg{
     // print('sdo head: ${vs[0].toRadixString(2)}');
 
     cs = (vs[0] >> 5);
+
+    if (cs == 4) throw Exception('sdo aborted.');
   }
 
 }
@@ -68,6 +70,9 @@ abstract class SdoDirectMsg extends SdoMsg{
     vs.add(dumpHead);
     vs.addAll(dumpIndex);
     vs.addAll(dumpData);
+
+    print('================ debug ===================');
+    print(vs);
 
     return vs;
   }
@@ -393,6 +398,27 @@ class SdoUpRespSegMsg extends SdoSegMsg {
     v |= t << 4;
     v |= n << 1;
     v |= c;
+
+    return v;
+  }
+
+}
+
+class SdoUpReqAbortMsg extends SdoDirectMsg {
+  static const int ccs = 0;
+  int x = 2;
+
+
+  SdoUpReqAbortMsg( super.mIndex,super.sIndex,super.data, {super.cs= ccs});
+
+  SdoUpReqAbortMsg.load(List<int> vs):super.load(vs){
+    data = [];
+  }
+
+  @override
+  int get dumpHead{
+    int v = 0;
+    v |= ccs << 5;
 
     return v;
   }

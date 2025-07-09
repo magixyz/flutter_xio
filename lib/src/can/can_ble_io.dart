@@ -12,11 +12,15 @@ import 'package:flutter_xio/src/can/sdo/sdo_ptl.dart';
 import '../ble/ble_io.dart';
 import 'blecan_def.dart';
 import 'sdo/sdo_io.dart';
+import 'package:synchronized/synchronized.dart';
 
 class CanBleIo extends SdoIo{
 
   late SdoPtl sdoPtl;
   BleIo bleIo;
+
+
+  Lock lock = new Lock();
 
   CanBleIo(this.bleIo){
     // SdoIo sdoIo = BlecanPtl(bleIo);
@@ -28,25 +32,40 @@ class CanBleIo extends SdoIo{
 
   Future<List<int>?> upload(int nodeId, int mIndex,int sIndex, {int retry = 3, int timeout = 1000}) async {
 
-    // print('upload, m index: $mIndex , s index: $sIndex');
+    return await lock.synchronized(() async {
+      print('upload, m index: $mIndex , s index: $sIndex');
 
-    var ret = await sdoPtl.upload(nodeId, mIndex, sIndex);
+      try {
+        var ret = await sdoPtl.upload(nodeId, mIndex, sIndex);
 
-    // print('upload, ret: $ret');
+        print('upload, ret: $ret');
 
 
-    return ret;
+        return ret;
+
+      }catch (e){
+        print(e);
+
+        return null;
+      }
+
+    });
+
+
   }
 
   Future<bool> download(int nodeId, int mIndex,int sIndex, List<int> data, {int retry = 3, int timeout = 1000}) async {
 
-    // print('download, m index: $mIndex , s index: $sIndex');
+    return await lock.synchronized(() async {
+      // print('download, m index: $mIndex , s index: $sIndex');
 
-    var ret = await sdoPtl.download(nodeId, mIndex, sIndex,data);
+      var ret = await sdoPtl.download(nodeId, mIndex, sIndex,data);
 
-    // print('download, ret: $ret');
+      // print('download, ret: $ret');
 
-    return ret;
+      return ret;
+    });
+
 
   }
 
@@ -72,7 +91,7 @@ class CanBleIo extends SdoIo{
 
     // print( '${DateTime.now()}: call start , delay test');
 
-    // print('send data: ${utf8.decode(sData)}');
+    print('can ble io sdata: ${utf8.decode(sData)}');
 
 
     List<int>? rData = await bleIo.call(sData, (List<int>? nData,List<int> rData){
@@ -90,7 +109,7 @@ class CanBleIo extends SdoIo{
       rData.addAll(nData);
 
 
-      // print('can ble io rdata: $rData');
+      print('can ble io rdata: ${utf8.decode(rData)}');
 
       if (rData.contains(  '\r'.codeUnitAt(0))){
         // print('can ble io 111');
@@ -102,7 +121,7 @@ class CanBleIo extends SdoIo{
 
         return null;
       }
-    },timeout: 10000);
+    },retry: 1,timeout: 3000);
 
     // print( '${DateTime.now()}: call end , delay test');
 
@@ -122,7 +141,7 @@ class CanBleIo extends SdoIo{
 
     // print( '${DateTime.now()}: call start , delay test');
 
-    // print('send data: ${utf8.decode(sData)}');
+    print('send data without res: ${utf8.decode(sData)}');
 
 
     bool ret = await bleIo.callWithoutRes(sData);

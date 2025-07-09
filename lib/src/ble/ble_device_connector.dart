@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'reactive_state.dart';
@@ -69,7 +70,7 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
 
     print('connect timeout: $timeout');
 
-    _connection = _ble.connectToDevice(id: deviceId, connectionTimeout: timeout?? Duration(seconds: 10)).listen(
+    _connection = _ble.connectToDevice(id: deviceId, connectionTimeout: timeout?? Duration(seconds: 20)).listen(
       (update) {
         print(
             'ConnectionState for device $deviceId : ${update.connectionState}');
@@ -93,7 +94,9 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
 
     }
 
-    if (deviceConnectionState == DeviceConnectionState.connected){
+    print('platform::: ${Platform.isIOS}');
+
+    if (deviceConnectionState == DeviceConnectionState.connected && !Platform.isIOS ){
       print('request high performance ...');
       await _ble.requestConnectionPriority(deviceId: deviceId, priority: ConnectionPriority.highPerformance);
       print('response high performance ...');

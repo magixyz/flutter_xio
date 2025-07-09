@@ -25,7 +25,9 @@ class BleIo{
 
      this.notifier.subscribe().listen((event) {
 
-       print('notify: $event');
+       // print('notify: $event');
+
+       // print('sync listens: ${listens.length}');
 
        for (Function listen in listens){
          listen(event);
@@ -36,17 +38,15 @@ class BleIo{
 
   Future<List<int>?> call(List<int> data,Function(List<int>? nData,List<int> rData) listen, {int retry = 3, int timeout = 3000}) async {
 
-    print('call === : $data');
-
     return await lock.synchronized(() async {
+
+      print( 'sync send data >>>>>>>>>>>>>>>: $data' );
 
       List<int> rData = [];
 
       var syncer = SyncerV1<List<int>?>(()async{
 
         if ( connector.deviceConnectionState != DeviceConnectionState.connected) return null;
-
-        print('write data: $data');
 
         await writer.write(data,withResponse: false);
 
@@ -56,9 +56,12 @@ class BleIo{
 
       listens.add(syncer.notify);
 
-      var ret = await syncer.retry(timeout: timeout);
+      var ret = await syncer.retry(retry: retry, timeout: timeout);
 
       listens.remove(syncer.notify);
+
+
+      print( 'sync recv data <<<<<<<<<<<<<<<<: $ret' );
 
       return ret;
 

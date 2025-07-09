@@ -31,7 +31,7 @@ class ModbusBleIoV2 {
         throw UnsupportedError('Unsupported register type: $rtype');
     }
 
-    List<int>? ret = await call(data);
+    List<int>? ret = await call(data ,timeout: timeout);
 
     if (ret == null) return null;
 
@@ -52,6 +52,8 @@ class ModbusBleIoV2 {
 
     Tuple4<int, int, int, int>? recv = ModbusPtl.r_modbus_write(Uint8List.fromList(ret!));
 
+    if (recv == null) return null;
+
     return recv?.item4;
 
   }
@@ -70,7 +72,7 @@ class ModbusBleIoV2 {
 
       rData.addAll(nData);
 
-      print('rData: $rData');
+      // print('rData: $rData');
 
       if (rData.length < 3) return null;
 
@@ -94,7 +96,7 @@ class ModbusBleIoV2 {
 
 
       return rData;
-    });
+    },timeout: timeout);
 
     return rData;
   }
