@@ -4,7 +4,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_xio/src/can/blecan_ptl.dart';
 import 'package:flutter_xio/src/can/sdo/sdo_def.dart';
 import 'package:flutter_xio/src/can/sdo/sdo_ptl.dart';
@@ -15,6 +14,37 @@ import 'sdo/sdo_io.dart';
 import 'package:synchronized/synchronized.dart';
 
 class CanBleIo extends SdoIo{
+
+  static final _responseFrame = RegExp(r'^t([0-9a-fA-F]{3})8[0-9a-fA-F]{16}$');
+
+  // BLE notifications are stream chunks: a header, payload, or CR can arrive
+  // separately, and one notification can contain acknowledgements/other nodes.
+  // Retain at most one unfinished standard 8-byte SDO frame (21 ASCII bytes).
+  static List<int>? _receiveFrame(
+      List<int>? chunk, List<int> buffer, int responseId) {
+    if (chunk == null) {
+      buffer.clear();
+      return null;
+    }
+    for (final byte in chunk) {
+      if (byte == 0x74) { // 't' cannot occur inside a hexadecimal payload.
+        buffer.clear();
+        buffer.add(byte);
+      } else if (byte == 0x0d) {
+        final frame = List<int>.of(buffer);
+        buffer.clear();
+        if (frame.length != 21) continue;
+        final match = _responseFrame.firstMatch(String.fromCharCodes(frame));
+        if (match != null && int.parse(match[1]!, radix: 16) == responseId) {
+          return [...frame, byte];
+        }
+      } else if (buffer.isNotEmpty) {
+        buffer.add(byte);
+        if (buffer.length > 21) buffer.clear();
+      }
+    }
+    return null;
+  }
 
   late SdoPtl sdoPtl;
   BleIo bleIo;
@@ -87,42 +117,20 @@ class CanBleIo extends SdoIo{
   Future<List<int>?> call(int nodeId, List<int> data) async{
 
     List<int> sData = utf8.encode(BlecanReqMsg(SdoReqCanId(nodeId), data).dump());
-    List<int> respHead = utf8.encode(SdoRespCanId(nodeId).dump());
-
+    final responseId = SdoRespCanId(nodeId).canId;
 
     // print( '${DateTime.now()}: call start , delay test');
 
     print('can ble io sdata: ${utf8.decode(sData)}');
 
 
-    List<int>? rData = await bleIo.call(sData, (List<int>? nData,List<int> rData){
-
-      if (nData == null){
-        rData.clear();
-        return null;
-      }
-
-      // print('can ble io ndata: $nData');
-
-      if( nData[0] != 116 || ! listEquals(nData.sublist(1,respHead.length + 1), respHead)) return null;
-
-
-      rData.addAll(nData);
-
-
-      print('can ble io rdata: ${utf8.decode(rData)}');
-
-      if (rData.contains(  '\r'.codeUnitAt(0))){
-        // print('can ble io 111');
-
-        return rData;
-      }else{
-
-        // print('can ble io 222');
-
-        return null;
-      }
-    },retry: 1,timeout: 3000);
+    final rData = await bleIo.call(
+      sData,
+      (List<int>? chunk, List<int> buffer) =>
+          _receiveFrame(chunk, buffer, responseId),
+      retry: 1,
+      timeout: 3000,
+    );
 
     // print( '${DateTime.now()}: call end , delay test');
 
