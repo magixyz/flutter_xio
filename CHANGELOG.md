@@ -1,3 +1,8 @@
+## 0.2.4
+
+- Add awaitable, idempotent BleIo.dispose to cancel notifications before BLE disconnect.
+- Reject I/O after disposal and release response listeners after failed calls.
+
 ## 0.2.3
 
 - Ignore mismatched object addresses and response types during normal SDO upload/download initiation, continuing to wait within the existing timeout.
