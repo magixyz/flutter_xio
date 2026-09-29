@@ -201,6 +201,107 @@ void main() {
     expect(await can.upload(6, 0x6040, 1), isNull);
   });
 
+  for (final stale in [
+    't58688000610101000405\r', // Actual trace: abort for 0x6100:01.
+    't58688040600201000405\r', // Same index, different subindex.
+    't586843006101DEADBEEF\r', // Successful response for another object.
+    't586843406002DEADBEEF\r',
+    't58686040600100000000\r', // Download acknowledgement during upload.
+    't58680040600101000200\r', // Old segment, bytes happen to match index.
+  ]) {
+    test('upload skips stale response ${stale.trim()} in one notification',
+        () async {
+      ble.replies.add([ascii.encode(stale) + response]);
+      expect(await can.upload(6, 0x6040, 1), [1, 0, 2, 0]);
+      expect(ble.requests, hasLength(1));
+    });
+  }
+
+  test('fragmented stale abort is skipped while valid header is retained',
+      () async {
+    final stale = ascii.encode('t58688000610101000405\r');
+    ble.replies.add([
+      stale.sublist(0, 12),
+      stale.sublist(12) + response.sublist(0, 9),
+      response.sublist(9),
+    ]);
+    expect(await can.upload(6, 0x6040, 1), [1, 0, 2, 0]);
+    expect(ble.requests, hasLength(1));
+  });
+
+  test('only stale replies leave the request pending until timeout', () async {
+    ble.replies.add([
+      ascii.encode('t58688000610101000405\r'),
+      ascii.encode('t586843406002DEADBEEF\r'),
+      null,
+    ]);
+    expect(await can.upload(6, 0x6040, 1), isNull);
+    expect(ble.requests, hasLength(1));
+    ble.replies.add([response]);
+    expect(await can.upload(6, 0x6040, 1), [1, 0, 2, 0]);
+  });
+
+  test('matching abort is not skipped in favor of a later success', () async {
+    ble.replies.add([
+      ascii.encode('t58688040600101000405\r') + response,
+    ]);
+    expect(await can.upload(6, 0x6040, 1), isNull);
+  });
+
+  for (final data in [
+    [1, 0],
+    List.generate(10, (i) => i + 1)
+  ]) {
+    test('download initiation filters stale replies (${data.length} bytes)',
+        () async {
+      ble.replies.add([
+        ascii.encode('t58688000610101000405\r'
+                't58686000610100000000\r'
+                't58686040600200000000\r') +
+            response + // Upload response for same object must not acknowledge write.
+            ascii.encode('t58686040600100000000\r'),
+      ]);
+      if (data.length > 4) {
+        ble.replies.add([ascii.encode('t58682000000000000000\r')]);
+        ble.replies.add([ascii.encode('t58683000000000000000\r')]);
+      }
+      expect(await can.download(6, 0x6040, 1, data), isTrue);
+      expect(ble.requests, hasLength(data.length > 4 ? 3 : 1));
+    });
+  }
+
+  test('download matching abort remains a failure', () async {
+    ble.replies.add([ascii.encode('t58688040600101000405\r')]);
+    expect(await can.download(6, 0x6040, 1, [1, 0]), isFalse);
+  });
+
+  test('stale abort before segmented upload does not alter segment sequence',
+      () async {
+    ble.replies.add([
+      ascii.encode('t58688000610101000405\r'
+          't5868414060010A000000\r'),
+    ]);
+    ble.replies.add([ascii.encode('t58680001020304050607\r')]);
+    ble.replies.add([ascii.encode('t58681908090A00000000\r')]);
+    expect(await can.upload(6, 0x6040, 1), List.generate(10, (i) => i + 1));
+    expect(ble.requests, hasLength(3));
+  });
+
+  test('block download sequence 0x40 is not treated as upload initiation',
+      () async {
+    for (final frame in [
+      't5868A440600140000000\r', // Start: block size 64.
+      't5868A240400000000000\r', // Acknowledge sequence 64 (0x40).
+      't5868A201400000000000\r', // Last block: acknowledge sequence 1.
+      't5868A100000000000000\r', // End acknowledgement.
+    ]) {
+      ble.replies.add([ascii.encode(frame)]);
+    }
+    expect(await can.blkDown(6, 0x6040, 1, List.filled(65 * 7, 0x55)), isTrue);
+    expect(ble.requests, hasLength(67));
+    expect(ascii.decode(ble.requests[64]), 't60684055555555555555\r');
+  });
+
   test('write without response keeps its existing encoding', () async {
     expect(await can.callWithoutRes(6, request), isTrue);
     expect(ascii.decode(ble.requests.single), 't60684040600100000000\r');

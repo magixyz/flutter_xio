@@ -21,7 +21,8 @@ class CanBleIo extends SdoIo{
   // separately, and one notification can contain acknowledgements/other nodes.
   // Retain at most one unfinished standard 8-byte SDO frame (21 ASCII bytes).
   static List<int>? _receiveFrame(
-      List<int>? chunk, List<int> buffer, int responseId) {
+      List<int>? chunk, List<int> buffer, int responseId,
+      List<int>? initialRequest) {
     if (chunk == null) {
       buffer.clear();
       return null;
@@ -36,6 +37,10 @@ class CanBleIo extends SdoIo{
         if (frame.length != 21) continue;
         final match = _responseFrame.firstMatch(String.fromCharCodes(frame));
         if (match != null && int.parse(match[1]!, radix: 16) == responseId) {
+          if (initialRequest != null) {
+            final payload = BlecanRespMsg.load(String.fromCharCodes(frame)).data;
+            if (!_matchesInitialResponse(initialRequest, payload)) continue;
+          }
           return [...frame, byte];
         }
       } else if (buffer.isNotEmpty) {
@@ -44,6 +49,18 @@ class CanBleIo extends SdoIo{
       }
     }
     return null;
+  }
+
+  static bool _matchesInitialResponse(List<int> request, List<int> response) {
+    // Segments and block-download sequence bytes are not command specifiers
+    // with an object address. Only callInitial opts into this check.
+    final expectedCommand = request[0] == 0x40 ? 2 : 3;
+    if (response[0] != 0x80 && response[0] >> 5 != expectedCommand) {
+      return false;
+    }
+    return response[1] == request[1] &&
+        response[2] == request[2] &&
+        response[3] == request[3];
   }
 
   late SdoPtl sdoPtl;
@@ -114,7 +131,14 @@ class CanBleIo extends SdoIo{
 
 
   @override
-  Future<List<int>?> call(int nodeId, List<int> data) async{
+  Future<List<int>?> call(int nodeId, List<int> data) => _call(nodeId, data);
+
+  @override
+  Future<List<int>?> callInitial(int nodeId, List<int> data) =>
+      _call(nodeId, data, initialRequest: List<int>.of(data));
+
+  Future<List<int>?> _call(int nodeId, List<int> data,
+      {List<int>? initialRequest}) async{
 
     List<int> sData = utf8.encode(BlecanReqMsg(SdoReqCanId(nodeId), data).dump());
     final responseId = SdoRespCanId(nodeId).canId;
@@ -127,7 +151,7 @@ class CanBleIo extends SdoIo{
     final rData = await bleIo.call(
       sData,
       (List<int>? chunk, List<int> buffer) =>
-          _receiveFrame(chunk, buffer, responseId),
+          _receiveFrame(chunk, buffer, responseId, initialRequest),
       retry: 1,
       timeout: 3000,
     );

@@ -21,7 +21,7 @@ class SdoPtl{
     // print( '${DateTime.now()}: upload start , delay test');
 
     SdoUpReqDirectMsg uqd = SdoUpReqDirectMsg(mIndex,sIndex,[]);
-    List<int>? rData = await sdoIo.call(nodeId, uqd.dump);
+    List<int>? rData = await sdoIo.callInitial(nodeId, uqd.dump);
     if (rData == null) return null;
 
     // print('rdata: $rData , ');
@@ -103,7 +103,7 @@ class SdoPtl{
 
     if (data.length <= 4){
       SdoDownReqDirectMsg dqd = SdoDownReqDirectMsg(4-data.length,1,1,mIndex,sIndex,data);
-      List<int>? rData = await sdoIo.call(nodeId, dqd.dump);
+      List<int>? rData = await sdoIo.callInitial(nodeId, dqd.dump);
       if (rData == null) return false;
       SdoDownRespDirectMsg? dsd = Catcher.call<SdoDownRespDirectMsg>(()=>SdoDownRespDirectMsg.load(rData));
       if (dsd == null) return false;
@@ -117,7 +117,7 @@ class SdoPtl{
 
 
       SdoDownReqDirectMsg dqd = SdoDownReqDirectMsg(0,0,1,mIndex,sIndex,dd);
-      List<int>? rData = await sdoIo.call(nodeId, dqd.dump);
+      List<int>? rData = await sdoIo.callInitial(nodeId, dqd.dump);
       if (rData == null) return false;
       SdoDownRespDirectMsg? dsd = Catcher.call<SdoDownRespDirectMsg>(()=>SdoDownRespDirectMsg.load(rData));
       if (dsd == null ) return false;

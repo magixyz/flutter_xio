@@ -1,3 +1,9 @@
+## 0.2.3
+
+- Ignore mismatched object addresses and response types during normal SDO upload/download initiation, continuing to wait within the existing timeout.
+- Preserve matching aborts, segmented transfers, and block-download frame handling.
+- Add regression coverage for stale responses, coalesced/fragmented notifications, and block-download sequence bytes.
+
 ## 0.2.2
 
 - Reassemble CAN responses across BLE notifications, including fragmented headers and terminators.
