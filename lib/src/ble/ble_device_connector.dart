@@ -82,7 +82,7 @@ class BleDeviceConnector extends ReactiveState<DeviceConnectionState> {
 
     print('mark: connect 2');
 
-    var mturet = await _ble.requestMtu(deviceId: deviceId, mtu: 512);
+    var mturet = await _ble.requestMtu(deviceId: deviceId, mtu: 517);
 
     print('mark: connect 3: $mturet');
 

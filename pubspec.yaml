@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  intl: ^0.18.1
+  intl: any
 
   tuple: ^2.0.2
 
